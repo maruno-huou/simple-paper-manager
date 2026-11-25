@@ -732,9 +732,16 @@ function App() {
     const sel = window.getSelection();
     const selectedText = sel ? sel.toString() : "";
     if (selectedText) {
-      const formatted = selectedText
-        .split(/\r?\n/)
-        .map((line) => (line.trim() === "" || line.startsWith(prefix) ? line : `${prefix}${line}`))
+      const lines = selectedText.split(/\r?\n/);
+      const nonEmptyLines = lines.filter((line) => line.trim() !== "");
+      const allHavePrefix =
+        nonEmptyLines.length > 0 && nonEmptyLines.every((line) => line.startsWith(prefix));
+      const formatted = lines
+        .map((line) => {
+          if (line.trim() === "") return line;
+          if (allHavePrefix) return line.slice(prefix.length);
+          return line.startsWith(prefix) ? line : `${prefix}${line}`;
+        })
         .join("\n");
       document.execCommand("insertText", false, formatted);
     } else {
