@@ -729,7 +729,17 @@ function App() {
     const editor = memoEditorRef.current;
     if (!editor) return;
     editor.focus();
-    document.execCommand("insertText", false, prefix);
+    const sel = window.getSelection();
+    const selectedText = sel ? sel.toString() : "";
+    if (selectedText) {
+      const formatted = selectedText
+        .split(/\r?\n/)
+        .map((line) => (line.trim() === "" || line.startsWith(prefix) ? line : `${prefix}${line}`))
+        .join("\n");
+      document.execCommand("insertText", false, formatted);
+    } else {
+      document.execCommand("insertText", false, prefix);
+    }
     setMemoText(editor.innerHTML);
   };
 
