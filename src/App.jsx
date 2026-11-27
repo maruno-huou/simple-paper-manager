@@ -418,7 +418,7 @@ function PdfCanvasViewer({ pdfUrl }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#e9ecef' }}>
       {rendering && (
         <div style={{ padding: '6px 12px', backgroundColor: '#fff3cd', color: '#856404', fontSize: '12px', textAlign: 'center', flexShrink: 0 }}>
-          ⏳ PDFを読み込み中... {pageCount > 0 ? `(全 ${pageCount} ページ)` : ""}
+          ⏳ Loading PDF... {pageCount > 0 ? `(${pageCount} pages)` : ""}
         </div>
       )}
       <div ref={containerRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '12px', boxSizing: 'border-box' }} />
@@ -792,9 +792,9 @@ function App() {
     setIsReadingMode(true);
     if (!currentPdfUrl || readingPages) return;
     setReadingLoading(true);
-    setReadingProgress("PDFからテキストを抽出中...");
+    setReadingProgress("Extracting text from PDF...");
     try {
-      const pages = await extractReadingPagesFromPdf(currentPdfUrl, (cur, total) => setReadingProgress(`ページを変換中 (${cur} / ${total})...`));
+      const pages = await extractReadingPagesFromPdf(currentPdfUrl, (cur, total) => setReadingProgress(`Converting pages (${cur} / ${total})...`)
       setReadingPages(pages);
     } catch (err) {
       alert("リーディングモードへの変換に失敗しました: " + err.message);
@@ -810,7 +810,7 @@ function App() {
     const newWin = window.open("", "_blank");
     if (!newWin) { alert("ポップアップがブロックされました。"); return; }
     newWin.document.open();
-    newWin.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>読み込み中...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ リーディングモードを準備しています...</div></body></html>`);
+    newWin.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>読み込み中...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ Preparing Reading Mode...</div></body></html>`);
     newWin.document.close();
     try {
       let pagesToShow = readingPages;
@@ -1580,7 +1580,7 @@ const handleAddPaper = async () => {
         isReadingMode ? (
           <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', backgroundColor: themeStyles.bg, color: themeStyles.text, padding: isMobile ? '18px 16px 60px' : '24px 32px 60px', boxSizing: 'border-box', fontFamily: 'Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif', fontSize: `${readingFontSize}px`, lineHeight: '1.85', textAlign: 'left' }}>
             {readingLoading ? (
-              <div style={{ textAlign: 'center', marginTop: '40px', fontFamily: 'sans-serif', fontSize: '14px', color: themeStyles.sub }}>⏳ {readingProgress || "リーディングモードへ変換中..."}</div>
+              <div style={{ textAlign: 'center', marginTop: '40px', fontFamily: 'sans-serif', fontSize: '14px', color: themeStyles.sub }}>⏳ {readingProgress || "Converting to Reading Mode..."}</div>
             ) : (
               <div style={{ maxWidth: '720px', margin: '0 auto' }}>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '11px', color: themeStyles.sub, marginBottom: '12px' }}>
@@ -1641,7 +1641,7 @@ const handleAddPaper = async () => {
             </div>
           </div>
           <div style={{ fontSize: '13.5px', lineHeight: '1.6', color: '#1f2328', whiteSpace: 'pre-wrap' }}>
-            {translationBox.loading ? "⏳ 翻訳中..." : translationBox.translated}
+            {translationBox.loading ? "⏳ Translating..." : translationBox.translated}
           </div>
         </div>
       )}
@@ -1754,7 +1754,7 @@ const handleAddPaper = async () => {
 
       {isFileDragging && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(26, 115, 232, 0.14)', border: '4px dashed #1a73e8', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-          <div style={{ backgroundColor: '#fff', padding: '18px 28px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', fontSize: '16px', fontWeight: 'bold', color: '#1a73e8' }}>📄 PDFをドロップして新規登録</div>
+          <div style={{ backgroundColor: '#fff', padding: '18px 28px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', fontSize: '16px', fontWeight: 'bold', color: '#1a73e8' }}>📄 Drop PDF to register</div>
         </div>
       )}
 
@@ -1798,7 +1798,7 @@ const handleAddPaper = async () => {
                   onChange={(e) => setNewFolder(e.target.value)}
                   style={{ padding: '10px', fontSize: isMobile ? '16px' : '14px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', minWidth: '180px' }}
                 >
-                  <option value="">📁 既存フォルダから選択...</option>
+                  <option value="">📁 Select existing folder...</option>
                   {allFolderPaths.filter(f => f !== "Uncategorized").map(f => (
                     <option key={f} value={f}>{f}</option>
                   ))}
@@ -1807,7 +1807,7 @@ const handleAddPaper = async () => {
                   type="text"
                   value={newFolder}
                   onChange={(e) => setNewFolder(e.target.value)}
-                  placeholder="または新しいフォルダ名を入力 (e.g., Labor Economics/Gender)"
+                  placeholder="Or enter a new folder path (e.g., Labor Economics/Gender)"
                   style={{ flex: 1, minWidth: '200px', padding: '10px', fontSize: isMobile ? '16px' : '14px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
                 />
               </div>
@@ -1816,7 +1816,7 @@ const handleAddPaper = async () => {
               <h3 style={{ marginTop: 0, fontSize: '16px', color: '#007bff' }}>📄 Auto-extract & Link PDF</h3>
               <p style={{ fontSize: '14px', color: '#555' }}>Select or drop a PDF file. It will be linked to this paper so it opens automatically next time.</p>
               <label style={{ display: 'inline-block', padding: '7px 14px', backgroundColor: loading ? '#9ec5fe' : '#007bff', color: '#fff', borderRadius: '5px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                {pendingPdfFile ? "📄 別のPDFを選び直す" : "📂 PDFファイルを選択"}
+                {pendingPdfFile ? "📄 Change PDF File" : "📂 Select PDF File"}
                 <input type="file" accept="application/pdf" onChange={handlePdfUpload} disabled={loading} style={{ display: 'none' }} />
               </label>
               {pendingPdfFile && <p style={{ color: '#28a745', fontSize: '13px', fontWeight: 'bold', marginTop: '8px' }}>✅ PDF linked: {pendingPdfFile.name}</p>}
