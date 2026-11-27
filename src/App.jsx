@@ -822,9 +822,6 @@ function App() {
     const title = selectedPaper?.title || "Reading Mode";
     const newWin = window.open("", "_blank");
     if (!newWin) { alert("Pop-up was blocked. Please allow pop-ups in your browser settings."); return; }
-    newWin.document.open();
-    newWin.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Loading...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ Preparing Reading Mode...</div></body></html>`);
-    newWin.document.close();
     try {
       let pagesToShow = readingPages;
       if (!pagesToShow && currentPdfUrl) {
@@ -835,9 +832,15 @@ function App() {
         pagesToShow = [{ pageNum: 1, paragraphs: [...(selectedPaper.abstract || "").split("\n").filter(Boolean), ...(plainMemo ? ["--- Notes ---", plainMemo] : [])] }];
       }
       if (!pagesToShow || pagesToShow.length === 0) { newWin.close(); alert("No PDF or text available to display."); return; }
-      newWin.document.open();
-      newWin.document.write(buildReadingModeHtml(title, pagesToShow, readingTheme, readingFontSize, highlights, speechRate));
-      newWin.document.close();
+      localStorage.setItem("pm_reading_tab_data", JSON.stringify({
+        title,
+        pages: pagesToShow,
+        theme: readingTheme,
+        fontSize: readingFontSize,
+        highlights,
+        rate: speechRate
+      }));
+      newWin.location.href = `${window.location.origin}${window.location.pathname}?reading=1`;
     } catch (err) { newWin.close(); alert("Failed to open Reading Mode in a new tab: " + err.message); }
   };
 
@@ -1580,8 +1583,7 @@ ${extractedText}`;
                 <button onClick={() => setReadingFontSize(s => Math.min(26, s + 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="Increase font size">A+</button>
                 <button onClick={() => setReadingTheme(t => (t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light'))} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer' }} title="Switch theme">{readingTheme === 'light' ? '☀️' : readingTheme === 'sepia' ? '📜' : '🌙'}</button>
                 <span style={{ width: '1px', height: '18px', backgroundColor: '#ddd', margin: '0 2px' }} />
-                <button onMouseDown={(e) => e.preventDefault()} onClick={handleTranslateSelection} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="Translate selected text">🌐</button>
-                <button onMouseDown={(e) => e.preventDefault()} onClick={handleToggleSpeech} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: isSpeaking ? '1px solid #d9534f' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isSpeaking ? '#fdecea' : '#fff', color: '#333', cursor: 'pointer' }} title={isSpeaking ? "Stop reading aloud" : "Read aloud (selection or full text)"}>{isSpeaking ? "⏹️" : "🔊"}</button>
+                                <button onMouseDown={(e) => e.preventDefault()} onClick={handleToggleSpeech} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: isSpeaking ? '1px solid #d9534f' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isSpeaking ? '#fdecea' : '#fff', color: '#333', cursor: 'pointer' }} title={isSpeaking ? "Stop reading aloud" : "Read aloud (selection or full text)"}>{isSpeaking ? "⏹️" : "🔊"}</button>
                 <button onMouseDown={(e) => e.preventDefault()} onClick={handleCycleSpeechRate} style={{ height: '26px', padding: '0 6px', fontSize: '11.5px', fontWeight: 'bold', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="Speech speed">{speechRate}x</button>
               </>
             )}
@@ -1597,9 +1599,9 @@ ${extractedText}`;
               <div style={{ textAlign: 'center', marginTop: '40px', fontFamily: 'sans-serif', fontSize: '14px', color: themeStyles.sub }}>⏳ {readingProgress || "Converting to Reading Mode..."}</div>
             ) : (
               <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-                <div style={{ fontFamily: 'sans-serif', fontSize: '11px', color: themeStyles.sub, marginBottom: '12px' }}>
-                  💡  🌐 Translate, 🔊 Read aloud
-                </div>
+                <div style={{ fontFamily: 'sans-serif', fontSize: '10px', color: themeStyles.sub, marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+  💡 Select text: 🖍️ Highlight  / 🔊 Read (click highlight to remove)
+</div>
                 <h2 style={{ fontSize: '1.35em', lineHeight: '1.4', marginTop: 0, paddingBottom: '12px', color: themeStyles.text, borderBottom: `1px solid ${themeStyles.border}` }}>{selectedPaper?.title}</h2>
                 {readingPages?.map((p) => (
                   <div key={p.pageNum} style={{ marginBottom: '28px' }}>
@@ -1884,4 +1886,95 @@ ${extractedText}`;
   );
 }
 
-export default App;
+function ReadingTabView() {
+  const data = loadStorage("pm_reading_tab_data", null);
+  const [fontSize, setFontSize] = useState(data?.fontSize || 17);
+  const [theme, setTheme] = useState(data?.theme || "light");
+  const [rate, setRate] = useState(data?.rate || 1.0);
+  const [speaking, setSpeaking] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.lang = "en";
+    if (data?.title) document.title = `📖 ${data.title}`;
+    return () => window.speechSynthesis?.cancel();
+  }, []);
+
+  if (!data) return <div style={{ padding: '40px', textAlign: 'center' }}>No reading data found.</div>;
+
+  const t = {
+    light: { bg: '#fff', text: '#1f2328', sub: '#656d76', bar: 'rgba(248,249,250,.94)', bd: '#e1e4e8', btn: '#fff' },
+    sepia: { bg: '#f6efe2', text: '#3b2f23', sub: '#7a6855', bar: 'rgba(239,229,211,.95)', bd: '#dfd1b8', btn: '#fbf6ec' },
+    dark: { bg: '#16181c', text: '#e6e8eb', sub: '#9aa0a6', bar: 'rgba(28,31,38,.95)', bd: '#2f343d', btn: '#242830' }
+  }[theme] || { bg: '#fff', text: '#1f2328', sub: '#656d76', bar: 'rgba(248,249,250,.94)', bd: '#e1e4e8', btn: '#fff' };
+
+  const toggleSpeech = () => {
+    if (!("speechSynthesis" in window)) return;
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
+    const sel = window.getSelection();
+    const selText = sel && !sel.isCollapsed ? sel.toString().trim() : "";
+    const chunks = selText ? [selText] : data.pages.flatMap(p => p.paragraphs).filter(Boolean);
+    if (!chunks.length) return;
+    window.speechSynthesis.cancel();
+    setSpeaking(true);
+    chunks.forEach((c, idx) => {
+      const u = new SpeechSynthesisUtterance(c);
+      u.lang = /[ぁ-んァ-ヶ一-龠]/.test(c) ? "ja-JP" : "en-US";
+      u.rate = rate;
+      if (idx === chunks.length - 1) u.onend = () => setSpeaking(false);
+      u.onerror = () => setSpeaking(false);
+      window.speechSynthesis.speak(u);
+    });
+  };
+
+  const cycleRate = () => {
+    const next = SPEECH_RATES[(SPEECH_RATES.indexOf(rate) + 1) % SPEECH_RATES.length];
+    setRate(next);
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); }
+  };
+
+  const btnStyle = { background: t.btn, color: t.text, border: `1px solid ${t.bd}`, borderRadius: '6px', padding: '5px 9px', fontSize: '13px', cursor: 'pointer' };
+
+  return (
+    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: 'Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif', textAlign: 'left' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '10px 16px', background: t.bar, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${t.bd}`, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+        <div style={{ fontSize: '13px', fontWeight: 'bold', maxWidth: '48vw', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>📖 {data.title}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <button style={btnStyle} onClick={() => setFontSize(s => Math.max(13, s - 2))}>A-</button>
+          <button style={btnStyle} onClick={() => setFontSize(s => Math.min(28, s + 2))}>A+</button>
+          <button style={btnStyle} onClick={() => setTheme('light')}>☀️</button>
+          <button style={btnStyle} onClick={() => setTheme('sepia')}>📜</button>
+          <button style={btnStyle} onClick={() => setTheme('dark')}>🌙</button>
+          <button style={btnStyle} onMouseDown={e => e.preventDefault()} onClick={toggleSpeech} title="Read aloud">{speaking ? "⏹️" : "🔊"}</button>
+          <button style={btnStyle} onClick={cycleRate} title="Speech speed">{rate}x</button>
+        </div>
+      </header>
+      <main style={{ maxWidth: '740px', margin: '0 auto', padding: '28px 20px 80px', fontSize: `${fontSize}px`, lineHeight: 1.85 }}>
+        <h1 style={{ fontSize: '1.55em', lineHeight: 1.35, margin: '0 0 28px', paddingBottom: '16px', borderBottom: `1px solid ${t.bd}` }}>{data.title}</h1>
+        {data.pages.map(p => (
+          <section key={p.pageNum} style={{ marginBottom: '32px' }}>
+            <div style={{ fontFamily: 'sans-serif', fontSize: '12px', fontWeight: 'bold', color: t.sub, letterSpacing: '0.08em', margin: '24px 0 12px', paddingBottom: '4px', borderBottom: `1px dashed ${t.bd}` }}>PAGE {p.pageNum}</div>
+            {p.paragraphs.map((para, idx) => {
+              const pHls = (data.highlights || []).filter(h => h.pageNum === p.pageNum && h.paraIdx === idx);
+              return (
+                <p key={idx} style={{ margin: '0 0 1.05em', wordBreak: 'break-word' }}>
+                  {splitTextByHighlights(para, pHls).map((seg, sIdx) =>
+                    seg.highlight
+                      ? <mark key={sIdx} style={{ background: seg.highlight.color, color: '#1f2328', padding: '0 2px', borderRadius: '3px' }}>{seg.text}</mark>
+                      : <span key={sIdx}>{seg.text}</span>
+                  )}
+                </p>
+              );
+            })}
+          </section>
+        ))}
+      </main>
+    </div>
+  );
+}
+
+function Root() {
+  const isReadingTab = new URLSearchParams(window.location.search).get("reading") === "1";
+  return isReadingTab ? <ReadingTabView /> : <App />;
+}
+
+export default Root;
