@@ -1306,22 +1306,26 @@ ${extractedText}`;
     }
   };
 
-  const handleAddPaper = async () => {
+const handleAddPaper = async () => {
     if (!newTitle.trim()) return;
     const folderName = newFolder.trim() || "Uncategorized";
     if (!isPersonalMode) {
-      setPapers(prev => [...prev, { id: `demo-${Date.now()}`, title: newTitle, abstract: newAbstract, memo: "", folder: folderName, highlights: [] }]);
+      const newPaper = { id: `demo-${Date.now()}`, title: newTitle, abstract: newAbstract, memo: "", folder: folderName, highlights: [] };
+      setPapers(prev => [...prev, newPaper]);
       setNewTitle(""); setNewAbstract(""); setNewFolder(""); setPendingPdfFile(null); setIsAdding(false);
       setExpandedFolders(prev => ({ ...prev, [folderName]: true }));
+      handleSelectPaper(newPaper);
       return;
     }
     setLoading(true); setLoadingMessage("Saving to database...");
     try {
       const docRef = await addDoc(collection(db, "papers"), { title: newTitle, abstract: newAbstract, memo: "", folder: folderName, highlights: [], createdAt: new Date() });
+      const newPaper = { id: docRef.id, title: newTitle, abstract: newAbstract, memo: "", folder: folderName, highlights: [] };
       if (pendingPdfFile) await savePdfLocally(docRef.id, pendingPdfFile);
       setNewTitle(""); setNewAbstract(""); setNewFolder(""); setPendingPdfFile(null); setIsAdding(false);
       setExpandedFolders(prev => ({ ...prev, [folderName]: true }));
       await fetchPapers();
+      handleSelectPaper(newPaper);
     } catch (e) { alert("Failed to save: " + e.message); }
     setLoading(false);
   };
@@ -1788,12 +1792,33 @@ ${extractedText}`;
             <h2 style={{ color: '#333' }}>Register New Paper</h2>
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Folder / Sub-folder Path (use "/" for nested folders)</label>
-              <input type="text" value={newFolder} onChange={(e) => setNewFolder(e.target.value)} placeholder="e.g., Labor Economics/Gender" style={{ width: '100%', padding: '10px', fontSize: isMobile ? '16px' : '14px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <select
+                  value={allFolderPaths.includes(newFolder) ? newFolder : ""}
+                  onChange={(e) => setNewFolder(e.target.value)}
+                  style={{ padding: '10px', fontSize: isMobile ? '16px' : '14px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', minWidth: '180px' }}
+                >
+                  <option value="">📁 既存フォルダから選択...</option>
+                  {allFolderPaths.filter(f => f !== "Uncategorized").map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={newFolder}
+                  onChange={(e) => setNewFolder(e.target.value)}
+                  placeholder="または新しいフォルダ名を入力 (e.g., Labor Economics/Gender)"
+                  style={{ flex: 1, minWidth: '200px', padding: '10px', fontSize: isMobile ? '16px' : '14px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
+                />
+              </div>
             </div>
             <div style={{ margin: '20px 0', padding: '20px', backgroundColor: '#f0f7ff', borderRadius: '8px', border: '1px dashed #007bff' }}>
               <h3 style={{ marginTop: 0, fontSize: '16px', color: '#007bff' }}>📄 Auto-extract & Link PDF</h3>
               <p style={{ fontSize: '14px', color: '#555' }}>Select or drop a PDF file. It will be linked to this paper so it opens automatically next time.</p>
-              <input type="file" accept="application/pdf" onChange={handlePdfUpload} disabled={loading} style={{ maxWidth: '100%' }} />
+              <label style={{ display: 'inline-block', padding: '7px 14px', backgroundColor: loading ? '#9ec5fe' : '#007bff', color: '#fff', borderRadius: '5px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                {pendingPdfFile ? "📄 別のPDFを選び直す" : "📂 PDFファイルを選択"}
+                <input type="file" accept="application/pdf" onChange={handlePdfUpload} disabled={loading} style={{ display: 'none' }} />
+              </label>
               {pendingPdfFile && <p style={{ color: '#28a745', fontSize: '13px', fontWeight: 'bold', marginTop: '8px' }}>✅ PDF linked: {pendingPdfFile.name}</p>}
               {loading && <p style={{ color: '#d9534f', fontWeight: 'bold', marginTop: '10px' }}>⏳ {loadingMessage}</p>}
             </div>
