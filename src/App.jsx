@@ -74,7 +74,21 @@ const detectIOS = () => {
 };
 
 const escapeHtml = (str = "") =>
-  str.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
+  str
+    .replace(/&/g, "&" + "amp;")
+    .replace(/</g, "&" + "lt;")
+    .replace(/>/g, "&" + "gt;")
+    .replace(/"/g, "&" + "quot;")
+    .replace(/'/g, "&" + "#39;");
+
+const decodeEntities = (str = "") =>
+  str
+    .replace(new RegExp("&" + "lt;", "g"), "<")
+    .replace(new RegExp("&" + "gt;", "g"), ">")
+    .replace(new RegExp("&" + "amp;", "g"), "&")
+    .replace(new RegExp("&" + "quot;", "g"), '"')
+    .replace(new RegExp("&" + "#39;", "g"), "'")
+    .replace(new RegExp("&" + "nbsp;", "g"), " ");
 
 const decodeEntities = (str = "") =>
   str.replace(/</g, "<").replace(/>/g, ">").replace(/&/g, "&").replace(/"/g, '"').replace(/'/g, "'").replace(/ /g, " ");
@@ -196,7 +210,7 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
       continue;
     }
     if (/^---+$/.test(trimmed)) { closeLists(); out.push(`<hr style="border:none;border-top:1px solid #e5e7eb;margin:4px 0;" />`); continue; }
-    const bqMatch = rawLine.match(/^((?:@@STY\d+@@)*)\s*>\s?(.*)$/);
+    const bqMatch = rawLine.match(new RegExp("^((?:@@STY\\d+@@)*)\\s*&" + "gt;\\s?(.*)$"));
     if (bqMatch) { closeLists(); out.push(`<div style="border-left:3px solid #cbd5e1;padding-left:7px;margin:2px 0;color:#555;">${bqMatch[1]}${bqMatch[2]}</div>`); continue; }
     const ulMatch = rawLine.match(/^((?:@@STY\d+@@)*)\s*[-*]\s+(.+)$/);
     if (ulMatch) {
