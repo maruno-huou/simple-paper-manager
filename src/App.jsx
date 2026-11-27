@@ -10,7 +10,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const SECRET_PASSCODE = import.meta.env.VITE_SECRET_PASSCODE || "demo";
 
-const SPEECH_RATES = [1.0, 1.25, 1.5, 2.0];
+const SPEECH_RATES = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75];
 
 const DEMO_PAPERS = [
   {
@@ -1598,7 +1598,7 @@ ${extractedText}`;
             ) : (
               <div style={{ maxWidth: '720px', margin: '0 auto' }}>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '11px', color: themeStyles.sub, marginBottom: '12px' }}>
-                  💡 Select text to use 🖍️ Highlight, 🌐 Translate, or 🔊 Read aloud (click a highlight to remove)
+                  💡  🌐 Translate, 🔊 Read aloud
                 </div>
                 <h2 style={{ fontSize: '1.35em', lineHeight: '1.4', marginTop: 0, paddingBottom: '12px', color: themeStyles.text, borderBottom: `1px solid ${themeStyles.border}` }}>{selectedPaper?.title}</h2>
                 {readingPages?.map((p) => (
