@@ -47,12 +47,7 @@ const MEMO_COLORS = [
   { key: "green", label: "緑", code: "#1e8e3e" }
 ];
 
-const MEMO_COLOR_MAP = {
-  black: "#1f2328",
-  orange: "#e67e22",
-  blue: "#1a73e8",
-  green: "#1e8e3e"
-};
+const MEMO_COLOR_MAP = { black: "#1f2328", orange: "#e67e22", blue: "#1a73e8", green: "#1e8e3e" };
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -79,43 +74,20 @@ const detectIOS = () => {
 };
 
 const escapeHtml = (str = "") =>
-  str
-    .replace(/&/g, "&" + "amp;")
-    .replace(/</g, "&" + "lt;")
-    .replace(/>/g, "&" + "gt;")
-    .replace(/"/g, "&" + "quot;")
-    .replace(/'/g, "&" + "#39;");
+  str.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
 
 const decodeEntities = (str = "") =>
-  str
-    .replace(new RegExp("&" + "lt;", "g"), "<")
-    .replace(new RegExp("&" + "gt;", "g"), ">")
-    .replace(new RegExp("&" + "amp;", "g"), "&")
-    .replace(new RegExp("&" + "quot;", "g"), '"')
-    .replace(new RegExp("&" + "#39;", "g"), "'")
-    .replace(new RegExp("&" + "nbsp;", "g"), " ");
+  str.replace(/</g, "<").replace(/>/g, ">").replace(/&/g, "&").replace(/"/g, '"').replace(/'/g, "'").replace(/ /g, " ");
 
 const normalizeTeX = (expr = "") =>
-  expr
-    .replace(/@@STY\d+@@/g, "")
-    .replace(/＿/g, "_")
-    .replace(/＾/g, "^")
-    .replace(/｛/g, "{")
-    .replace(/｝/g, "}")
-    .replace(/＝/g, "=")
-    .replace(/＋/g, "+")
-    .replace(/－/g, "-")
-    .trim();
+  expr.replace(/@@STY\d+@@/g, "").replace(/＿/g, "_").replace(/＾/g, "^").replace(/｛/g, "{").replace(/｝/g, "}").replace(/＝/g, "=").replace(/＋/g, "+").replace(/－/g, "-").trim();
 
 const memoToHtml = (raw = "") => {
   if (!raw) return "";
   if (/<(div|br|span|font|p|b|strong|i|em|u|s|strike|del)\b/i.test(raw)) return raw;
   let html = escapeHtml(raw);
   for (let i = 0; i < 4; i++) {
-    html = html.replace(
-      /\[(black|orange|blue|green)\]([\s\S]*?)\[\/\1\]/g,
-      (_, c, inner) => `<span style="color:${MEMO_COLOR_MAP[c] || '#1f2328'}">${inner}</span>`
-    );
+    html = html.replace(/\[(black|orange|blue|green)\]([\s\S]*?)\[\/\1\]/g, (_, c, inner) => `<span style="color:${MEMO_COLOR_MAP[c] || '#1f2328'}">${inner}</span>`);
   }
   return html.replace(/\n/g, "<br>");
 };
@@ -127,10 +99,8 @@ const sanitizeInlineStyle = (styleStr = "") => {
     if (!propRaw || !valRaw) return;
     const prop = propRaw.trim().toLowerCase();
     const val = valRaw.trim();
-    if (["color", "font-weight", "font-style", "text-decoration", "text-decoration-line"].includes(prop)) {
-      if (!/[<>]|url\s*\(|expression\s*\(/i.test(val)) {
-        allowed.push(`${prop}:${val}`);
-      }
+    if (["color", "font-weight", "font-style", "text-decoration", "text-decoration-line"].includes(prop) && !/[<>]|url\s*\(|expression\s*\(/i.test(val)) {
+      allowed.push(`${prop}:${val}`);
     }
   });
   return allowed.join(";");
@@ -138,7 +108,6 @@ const sanitizeInlineStyle = (styleStr = "") => {
 
 const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {}) => {
   if (!rawInput) return "";
-
   let working = rawInput;
   const styleTokens = [];
   const pushStyleToken = (tagHtml) => {
@@ -148,27 +117,20 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
   };
 
   if (preserveColors) {
-    let html = memoToHtml(rawInput);
-    html = html
+    let html = memoToHtml(rawInput)
       .replace(/<div[^>]*><br\s*\/?><\/div>/gi, "\n")
       .replace(/<p[^>]*><br\s*\/?><\/p>/gi, "\n")
       .replace(/<\/(div|p)>\s*<(div|p)[^>]*>/gi, "\n")
       .replace(/<(div|p)[^>]*>/gi, "\n")
       .replace(/<\/(div|p)>/gi, "")
       .replace(/<br\s*\/?>/gi, "\n");
-
     html = html.replace(/<span\b[^>]*style=["']([^"']+)["'][^>]*>/gi, (_, styleAttr) => {
       const safeStyle = sanitizeInlineStyle(styleAttr);
       return safeStyle ? pushStyleToken(`<span style="${safeStyle}">`) : pushStyleToken(`<span>`);
     });
-    html = html.replace(/<font\b[^>]*color=["']?([^"'\s>]+)["']?[^>]*>/gi, (_, col) =>
-      pushStyleToken(`<span style="color:${col.trim()}">`)
-    );
+    html = html.replace(/<font\b[^>]*color=["']?([^"'\s>]+)["']?[^>]*>/gi, (_, col) => pushStyleToken(`<span style="color:${col.trim()}">`));
     html = html.replace(/<\/(span|font)>/gi, () => pushStyleToken(`</span>`));
-    html = html.replace(/<(\/?)(b|strong|i|em|u|s|strike|del)\b[^>]*>/gi, (_, slash, tag) =>
-      pushStyleToken(`<${slash}${tag.toLowerCase()}>`)
-    );
-
+    html = html.replace(/<(\/?)(b|strong|i|em|u|s|strike|del)\b[^>]*>/gi, (_, slash, tag) => pushStyleToken(`<${slash}${tag.toLowerCase()}>`));
     html = html.replace(/<[^>]+>/g, "");
     working = decodeEntities(html).replace(/^\n+/, "");
   }
@@ -176,51 +138,38 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
   const codeBlockTokens = [];
   working = working.replace(/```(?:\w+)?\n?([\s\S]*?)```/g, (_, code) => {
     const idx = codeBlockTokens.length;
-    const cleanCode = code.replace(/@@STY\d+@@/g, "");
-    codeBlockTokens.push(
-      `<pre style="background:#f3f4f6;color:#1f2328;padding:6px 8px;border-radius:5px;overflow-x:auto;font-size:12px;margin:4px 0;font-family:monospace;line-height:1.4;"><code>${escapeHtml(cleanCode.trimEnd())}</code></pre>`
-    );
+    codeBlockTokens.push(`<pre style="background:#f3f4f6;color:#1f2328;padding:6px 8px;border-radius:5px;overflow-x:auto;font-size:12px;margin:4px 0;font-family:monospace;line-height:1.4;"><code>${escapeHtml(code.replace(/@@STY\d+@@/g, "").trimEnd())}</code></pre>`);
     return `@@CODEBLK${idx}@@`;
   });
 
   const mathTokens = [];
-
   working = working.replace(/(^|\n)((?:@@STY\d+@@)*)[ \t]*\$\$([\s\S]+?)\$\$[ \t]*((?:@@STY\d+@@)*)(?=\n|$)/g, (_, lead, preSty, expr, postSty) => {
     const idx = mathTokens.length;
     const rendered = katex.renderToString(normalizeTeX(expr), { displayMode: true, throwOnError: false });
     mathTokens.push(`<div style="overflow-x:auto;margin:2px 0;text-align:left;">${preSty}${rendered}${postSty}</div>`);
     return `${lead}@@MATHBLK${idx}@@`;
   });
-
   working = working.replace(/\$\$([^$\n]+?)\$\$/g, (_, expr) => {
     const idx = mathTokens.length;
-    const rendered = katex.renderToString(normalizeTeX(expr), { displayMode: false, throwOnError: false });
-    mathTokens.push(rendered);
+    mathTokens.push(katex.renderToString(normalizeTeX(expr), { displayMode: false, throwOnError: false }));
     return `@@MATH${idx}@@`;
   });
-
   working = working.replace(/\$([^$\n]+?)\$/g, (full, expr) => {
     const cleanExpr = normalizeTeX(expr);
     if (!cleanExpr || /^\d+(\.\d+)?[\s→,-]/.test(cleanExpr)) return full;
     const idx = mathTokens.length;
-    const rendered = katex.renderToString(cleanExpr, { displayMode: false, throwOnError: false });
-    mathTokens.push(rendered);
+    mathTokens.push(katex.renderToString(cleanExpr, { displayMode: false, throwOnError: false }));
     return `@@MATH${idx}@@`;
   });
 
   const inlineCodeTokens = [];
   working = working.replace(/`([^`\n]+)`/g, (_, code) => {
     const idx = inlineCodeTokens.length;
-    const cleanCode = code.replace(/@@STY\d+@@/g, "");
-    inlineCodeTokens.push(
-      `<code style="background:#eef0f3;color:#c7254e;padding:1px 4px;border-radius:3px;font-size:0.92em;font-family:monospace;">${escapeHtml(cleanCode)}</code>`
-    );
+    inlineCodeTokens.push(`<code style="background:#eef0f3;color:#c7254e;padding:1px 4px;border-radius:3px;font-size:0.92em;font-family:monospace;">${escapeHtml(code.replace(/@@STY\d+@@/g, ""))}</code>`);
     return `@@INCODE${idx}@@`;
   });
 
-  let safe = escapeHtml(working);
-
-  safe = safe
+  let safe = escapeHtml(working)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/~~(.+?)~~/g, "<del>$1</del>")
     .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
@@ -229,23 +178,14 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
   const out = [];
   let inUl = false;
   let inOl = false;
-
   const closeLists = () => {
     if (inUl) { out.push("</ul>"); inUl = false; }
     if (inOl) { out.push("</ol>"); inOl = false; }
   };
 
-  const bqRegex = new RegExp("^((?:@@STY\\d+@@)*)\\s*&" + "gt;\\s?(.*)$");
-
   for (const rawLine of lines) {
     const trimmed = rawLine.trim();
-
-    if (/^@@(CODEBLK|MATHBLK)\d+@@$/.test(trimmed)) {
-      closeLists();
-      out.push(trimmed);
-      continue;
-    }
-
+    if (/^@@(CODEBLK|MATHBLK)\d+@@$/.test(trimmed)) { closeLists(); out.push(trimmed); continue; }
     const hMatch = rawLine.match(/^((?:@@STY\d+@@)*)\s*(#{1,3})\s+(.+)$/);
     if (hMatch) {
       closeLists();
@@ -255,20 +195,9 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
       out.push(`<div style="font-size:${size};font-weight:bold;margin:4px 0 2px;line-height:1.3;${border}">${hMatch[1]}${hMatch[3]}</div>`);
       continue;
     }
-
-    if (/^---+$/.test(trimmed)) {
-      closeLists();
-      out.push(`<hr style="border:none;border-top:1px solid #e5e7eb;margin:4px 0;" />`);
-      continue;
-    }
-
-    const bqMatch = rawLine.match(bqRegex);
-    if (bqMatch) {
-      closeLists();
-      out.push(`<div style="border-left:3px solid #cbd5e1;padding-left:7px;margin:2px 0;color:#555;">${bqMatch[1]}${bqMatch[2]}</div>`);
-      continue;
-    }
-
+    if (/^---+$/.test(trimmed)) { closeLists(); out.push(`<hr style="border:none;border-top:1px solid #e5e7eb;margin:4px 0;" />`); continue; }
+    const bqMatch = rawLine.match(/^((?:@@STY\d+@@)*)\s*>\s?(.*)$/);
+    if (bqMatch) { closeLists(); out.push(`<div style="border-left:3px solid #cbd5e1;padding-left:7px;margin:2px 0;color:#555;">${bqMatch[1]}${bqMatch[2]}</div>`); continue; }
     const ulMatch = rawLine.match(/^((?:@@STY\d+@@)*)\s*[-*]\s+(.+)$/);
     if (ulMatch) {
       if (inOl) { out.push("</ol>"); inOl = false; }
@@ -276,7 +205,6 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
       out.push(`<li style="margin:0;">${ulMatch[1]}${ulMatch[2]}</li>`);
       continue;
     }
-
     const olMatch = rawLine.match(/^((?:@@STY\d+@@)*)\s*\d+\.\s+(.+)$/);
     if (olMatch) {
       if (inUl) { out.push("</ul>"); inUl = false; }
@@ -284,25 +212,17 @@ const renderMarkdownAndMathHtml = (rawInput = "", { preserveColors = false } = {
       out.push(`<li style="margin:0;">${olMatch[1]}${olMatch[2]}</li>`);
       continue;
     }
-
     closeLists();
-    if (trimmed === "") {
-      out.push(`<div style="height:4px;"></div>`);
-    } else {
-      out.push(`<div style="margin:0;">${rawLine}</div>`);
-    }
+    out.push(trimmed === "" ? `<div style="height:4px;"></div>` : `<div style="margin:0;">${rawLine}</div>`);
   }
   closeLists();
 
-  let result = out.join("");
-
-  result = result.replace(/@@INCODE(\d+)@@/g, (_, i) => inlineCodeTokens[Number(i)] || "");
-  result = result.replace(/@@MATHBLK(\d+)@@/g, (_, i) => mathTokens[Number(i)] || "");
-  result = result.replace(/@@MATH(\d+)@@/g, (_, i) => mathTokens[Number(i)] || "");
-  result = result.replace(/@@CODEBLK(\d+)@@/g, (_, i) => codeBlockTokens[Number(i)] || "");
-  result = result.replace(/@@STY(\d+)@@/g, (_, i) => styleTokens[Number(i)] || "");
-
-  return result;
+  return out.join("")
+    .replace(/@@INCODE(\d+)@@/g, (_, i) => inlineCodeTokens[Number(i)] || "")
+    .replace(/@@MATHBLK(\d+)@@/g, (_, i) => mathTokens[Number(i)] || "")
+    .replace(/@@MATH(\d+)@@/g, (_, i) => mathTokens[Number(i)] || "")
+    .replace(/@@CODEBLK(\d+)@@/g, (_, i) => codeBlockTokens[Number(i)] || "")
+    .replace(/@@STY(\d+)@@/g, (_, i) => styleTokens[Number(i)] || "");
 };
 
 const splitTextByHighlights = (text, paraHighlights) => {
@@ -319,9 +239,7 @@ const splitTextByHighlights = (text, paraHighlights) => {
       } else {
         if (pos > 0) next.push({ text: seg.text.slice(0, pos), highlight: null });
         next.push({ text: hl.text, highlight: hl });
-        if (pos + hl.text.length < seg.text.length) {
-          next.push({ text: seg.text.slice(pos + hl.text.length), highlight: null });
-        }
+        if (pos + hl.text.length < seg.text.length) next.push({ text: seg.text.slice(pos + hl.text.length), highlight: null });
       }
     }
     segments = next;
@@ -331,10 +249,8 @@ const splitTextByHighlights = (text, paraHighlights) => {
 
 const extractReadingPagesFromPdf = async (pdfUrl, onProgress) => {
   const response = await fetch(pdfUrl);
-  const arrayBuffer = await response.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: await response.arrayBuffer() }).promise;
   const pages = [];
-
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     if (onProgress) onProgress(pageNum, pdf.numPages);
     const page = await pdf.getPage(pageNum);
@@ -342,13 +258,11 @@ const extractReadingPagesFromPdf = async (pdfUrl, onProgress) => {
     const paragraphs = [];
     let currentPara = "";
     let lastY = null;
-
     for (const item of textContent.items) {
       const str = item.str;
       if (!str) continue;
       const y = item.transform ? item.transform[5] : null;
       const fontHeight = item.height || (item.transform ? Math.abs(item.transform[0]) : 12) || 12;
-
       if (lastY !== null && y !== null) {
         const yDiff = Math.abs(lastY - y);
         if (yDiff > fontHeight * 1.65) {
@@ -375,55 +289,15 @@ const buildReadingModeHtml = (title, pages, initialTheme = "light", initialFontS
   const bodyHtml = pages.map((p) => {
     const parasHtml = p.paragraphs.map((para, idx) => {
       const pHls = highlights.filter(h => h.pageNum === p.pageNum && h.paraIdx === idx);
-      const segs = splitTextByHighlights(para, pHls);
-      const inner = segs.map(s =>
-        s.highlight
-          ? `<mark style="background:${s.highlight.color};color:#1f2328;padding:0 2px;border-radius:3px;">${escapeHtml(s.text)}</mark>`
-          : escapeHtml(s.text)
+      const inner = splitTextByHighlights(para, pHls).map(s =>
+        s.highlight ? `<mark style="background:${s.highlight.color};color:#1f2328;padding:0 2px;border-radius:3px;">${escapeHtml(s.text)}</mark>` : escapeHtml(s.text)
       ).join("");
       return `<p>${inner}</p>`;
     }).join("\n");
     return `<section class="page-block"><div class="page-label">Page ${p.pageNum}</div>${parasHtml}</section>`;
   }).join("\n");
 
-  return `<!DOCTYPE html>
-<html lang="ja"><head><meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>📖 ${safeTitle}</title>
-<style>
-  :root { --bg:#fff; --text:#1f2328; --sub:#656d76; --bar:rgba(248,249,250,.94); --bd:#e1e4e8; --btn:#fff; }
-  body[data-theme="sepia"] { --bg:#f6efe2; --text:#3b2f23; --sub:#7a6855; --bar:rgba(239,229,211,.95); --bd:#dfd1b8; --btn:#fbf6ec; }
-  body[data-theme="dark"] { --bg:#16181c; --text:#e6e8eb; --sub:#9aa0a6; --bar:rgba(28,31,38,.95); --bd:#2f343d; --btn:#242830; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif; transition:background .2s,color .2s; text-align:left; }
-  .toolbar { position:sticky; top:0; z-index:100; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; padding:10px 16px; padding-top:max(10px,env(safe-area-inset-top)); background:var(--bar); backdrop-filter:blur(8px); border-bottom:1px solid var(--bd); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-  .toolbar-title { font-size:13px; font-weight:700; max-width:48vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .controls { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  button { background:var(--btn); color:var(--text); border:1px solid var(--bd); border-radius:6px; padding:6px 10px; font-size:13px; cursor:pointer; }
-  main { max-width:740px; margin:0 auto; padding:28px 20px 80px; font-size:${initialFontSize}px; line-height:1.85; }
-  h1 { font-size:1.55em; line-height:1.35; margin:0 0 28px; padding-bottom:16px; border-bottom:1px solid var(--bd); }
-  .page-block { margin-bottom:32px; }
-  .page-label { font-family:sans-serif; font-size:12px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.08em; margin:24px 0 12px; padding-bottom:4px; border-bottom:1px dashed var(--bd); }
-  p { margin:0 0 1.05em; word-break:break-word; }
-</style></head>
-<body data-theme="${initialTheme}">
-  <header class="toolbar">
-    <div class="toolbar-title">📖 ${safeTitle}</div>
-    <div class="controls">
-      <button onclick="changeSize(-2)">A-</button>
-      <button onclick="changeSize(2)">A+</button>
-      <button onclick="setTheme('light')">☀️</button>
-      <button onclick="setTheme('sepia')">📜</button>
-      <button onclick="setTheme('dark')">🌙</button>
-    </div>
-  </header>
-  <main id="article"><h1>${safeTitle}</h1>${bodyHtml}</main>
-  <script>
-    let s=${initialFontSize};
-    function changeSize(d){ s=Math.min(28,Math.max(13,s+d)); document.getElementById('article').style.fontSize=s+'px'; }
-    function setTheme(t){ document.body.setAttribute('data-theme',t); }
-  </script>
-</body></html>`;
+  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" /><title>📖 ${safeTitle}</title><style>:root{--bg:#fff;--text:#1f2328;--sub:#656d76;--bar:rgba(248,249,250,.94);--bd:#e1e4e8;--btn:#fff}body[data-theme="sepia"]{--bg:#f6efe2;--text:#3b2f23;--sub:#7a6855;--bar:rgba(239,229,211,.95);--bd:#dfd1b8;--btn:#fbf6ec}body[data-theme="dark"]{--bg:#16181c;--text:#e6e8eb;--sub:#9aa0a6;--bar:rgba(28,31,38,.95);--bd:#2f343d;--btn:#242830}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;transition:background .2s,color .2s;text-align:left}.toolbar{position:sticky;top:0;z-index:100;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--bar);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.toolbar-title{font-size:13px;font-weight:700;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}button{background:var(--btn);color:var(--text);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}main{max-width:740px;margin:0 auto;padding:28px 20px 80px;font-size:${initialFontSize}px;line-height:1.85}h1{font-size:1.55em;line-height:1.35;margin:0 0 28px;padding-bottom:16px;border-bottom:1px solid var(--bd)}.page-block{margin-bottom:32px}.page-label{font-family:sans-serif;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 12px;padding-bottom:4px;border-bottom:1px dashed var(--bd)}p{margin:0 0 1.05em;word-break:break-word}</style></head><body data-theme="${initialTheme}"><header class="toolbar"><div class="toolbar-title">📖 ${safeTitle}</div><div class="controls"><button onclick="changeSize(-2)">A-</button><button onclick="changeSize(2)">A+</button><button onclick="setTheme('light')">☀️</button><button onclick="setTheme('sepia')">📜</button><button onclick="setTheme('dark')">🌙</button></div></header><main id="article"><h1>${safeTitle}</h1>${bodyHtml}</main><script>let s=${initialFontSize};function changeSize(d){s=Math.min(28,Math.max(13,s+d));document.getElementById('article').style.fontSize=s+'px'}function setTheme(t){document.body.setAttribute('data-theme',t)}</script></body></html>`;
 };
 
 const openPdfDB = () => new Promise((resolve, reject) => {
@@ -475,6 +349,15 @@ const generateWithFallback = async (prompt, mode = "flash") => {
   throw lastError;
 };
 
+const reorderList = (currentIds, savedOrder, draggedId, targetId, pos) => {
+  const merged = [...savedOrder.filter(id => currentIds.includes(id)), ...currentIds.filter(id => !savedOrder.includes(id))];
+  const without = merged.filter(id => id !== draggedId);
+  const idx = without.indexOf(targetId);
+  if (idx === -1) return [...without, draggedId];
+  without.splice(pos === "after" ? idx + 1 : idx, 0, draggedId);
+  return without;
+};
+
 function PdfCanvasViewer({ pdfUrl }) {
   const containerRef = useRef(null);
   const [rendering, setRendering] = useState(true);
@@ -495,7 +378,6 @@ function PdfCanvasViewer({ pdfUrl }) {
         setPageCount(pdf.numPages);
         const containerWidth = Math.max((containerRef.current.clientWidth || window.innerWidth) - 24, 280);
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           if (cancelled) return;
           const page = await pdf.getPage(pageNum);
@@ -555,6 +437,16 @@ function App() {
   const [isMdMenuOpen, setIsMdMenuOpen] = useState(false);
   const isEditingMemoRef = useRef(false);
   const memoEditorRef = useRef(null);
+  const memoHistoryRef = useRef({ stack: [], index: -1 });
+
+  const pushMemoHistory = (html) => {
+    const h = memoHistoryRef.current;
+    if (h.stack[h.index] === html) return;
+    h.stack = h.stack.slice(0, h.index + 1);
+    h.stack.push(html);
+    if (h.stack.length > 50) h.stack.shift();
+    h.index = h.stack.length - 1;
+  };
 
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -574,6 +466,8 @@ function App() {
   const [readingFontSize, setReadingFontSize] = useState(() => loadStorage("pm_readingFontSize", 16));
   const [highlights, setHighlights] = useState([]);
   const lastSelectionRef = useRef(null);
+  const [translationBox, setTranslationBox] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [sidebarWidth, setSidebarWidth] = useState(() => loadStorage("pm_sidebarWidth", 280));
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
@@ -587,22 +481,35 @@ function App() {
   const [activeFolder, setActiveFolder] = useState(() => loadStorage("pm_activeFolder", ""));
   const [customFolders, setCustomFolders] = useState(() => loadStorage("pm_customFolders", []));
   const [expandedFolders, setExpandedFolders] = useState(() => loadStorage("pm_expandedFolders", {}));
+  const [folderOrder, setFolderOrder] = useState(() => loadStorage("pm_folderOrder", []));
+  const [paperOrder, setPaperOrder] = useState(() => loadStorage("pm_paperOrder", []));
   const [openMenuId, setOpenMenuId] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
-  const [dragOverTarget, setDragOverTarget] = useState(null);
+  const [dragOverInfo, setDragOverInfo] = useState(null);
+  const [isFileDragging, setIsFileDragging] = useState(false);
 
   const hasRestoredForMode = useRef(null);
   const isSidebarOpen = sidebarWidth > 0;
   const selectedPaperId = selectedPaper?.id || null;
 
+  useEffect(() => { memoHistoryRef.current = { stack: [], index: -1 }; }, [selectedPaperId]);
+
   useEffect(() => {
     if (!isMemoPreview && memoEditorRef.current) {
       const targetHtml = memoToHtml(memoText);
-      if (memoEditorRef.current.innerHTML !== targetHtml) {
-        memoEditorRef.current.innerHTML = targetHtml;
-      }
+      if (memoEditorRef.current.innerHTML !== targetHtml) memoEditorRef.current.innerHTML = targetHtml;
     }
   }, [selectedPaperId, isMemoPreview, mobileTab]);
+
+  useEffect(() => {
+    if (!isReadingMode) {
+      window.speechSynthesis?.cancel();
+      setIsSpeaking(false);
+      setTranslationBox(null);
+    }
+  }, [isReadingMode]);
+
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -610,52 +517,33 @@ function App() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat, loading, mobileTab]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chat, loading, mobileTab]);
 
-  useEffect(() => {
-    setReadingPages(null);
-    setIsReadingMode(false);
-    setReadingProgress("");
-  }, [currentPdfUrl]);
+  useEffect(() => { setReadingPages(null); setIsReadingMode(false); setReadingProgress(""); }, [currentPdfUrl]);
 
   useEffect(() => {
     if (!isPersonalMode || !selectedPaperId) return;
-
-    const unsub = onSnapshot(
-      doc(db, "papers", selectedPaperId),
-      (snap) => {
-        if (!snap.exists()) return;
-        if (snap.metadata.hasPendingWrites) return;
-
-        const data = { id: snap.id, ...snap.data() };
-        setSelectedPaper((prev) => (prev && prev.id === data.id ? { ...prev, ...data } : prev));
-        setPapers((prev) => prev.map((p) => (p.id === data.id ? { ...p, ...data } : p)));
-
-        if (Array.isArray(data.chat)) {
-          setChat((prev) => (JSON.stringify(prev) === JSON.stringify(data.chat) ? prev : data.chat));
-          setChatHistoryMap((prev) => ({ ...prev, [data.id]: data.chat }));
+    const unsub = onSnapshot(doc(db, "papers", selectedPaperId), (snap) => {
+      if (!snap.exists() || snap.metadata.hasPendingWrites) return;
+      const data = { id: snap.id, ...snap.data() };
+      setSelectedPaper((prev) => (prev && prev.id === data.id ? { ...prev, ...data } : prev));
+      setPapers((prev) => prev.map((p) => (p.id === data.id ? { ...p, ...data } : p)));
+      if (Array.isArray(data.chat)) {
+        setChat((prev) => (JSON.stringify(prev) === JSON.stringify(data.chat) ? prev : data.chat));
+        setChatHistoryMap((prev) => ({ ...prev, [data.id]: data.chat }));
+      }
+      if (Array.isArray(data.highlights)) {
+        setHighlights((prev) => (JSON.stringify(prev) === JSON.stringify(data.highlights) ? prev : data.highlights));
+      }
+      if (!isEditingMemoRef.current) {
+        const remoteMemo = data.memo || "";
+        setMemoText((prev) => (prev === remoteMemo ? prev : remoteMemo));
+        if (memoEditorRef.current && !isMemoPreview) {
+          const remoteHtml = memoToHtml(remoteMemo);
+          if (memoEditorRef.current.innerHTML !== remoteHtml) memoEditorRef.current.innerHTML = remoteHtml;
         }
-        if (Array.isArray(data.highlights)) {
-          setHighlights((prev) =>
-            JSON.stringify(prev) === JSON.stringify(data.highlights) ? prev : data.highlights
-          );
-        }
-        if (!isEditingMemoRef.current) {
-          const remoteMemo = data.memo || "";
-          setMemoText((prev) => (prev === remoteMemo ? prev : remoteMemo));
-          if (memoEditorRef.current && !isMemoPreview) {
-            const remoteHtml = memoToHtml(remoteMemo);
-            if (memoEditorRef.current.innerHTML !== remoteHtml) {
-              memoEditorRef.current.innerHTML = remoteHtml;
-            }
-          }
-        }
-      },
-      (error) => console.error("Realtime sync error:", error)
-    );
-
+      }
+    }, (error) => console.error("Realtime sync error:", error));
     return () => unsub();
   }, [isPersonalMode, selectedPaperId, isMemoPreview]);
 
@@ -667,15 +555,8 @@ function App() {
       const text = sel.toString().trim();
       if (!text) return;
       const node = sel.anchorNode;
-      const el = node?.nodeType === 3 ? node.parentElement : node;
-      const pEl = el?.closest?.('p[data-page]');
-      if (pEl) {
-        lastSelectionRef.current = {
-          pageNum: Number(pEl.dataset.page),
-          paraIdx: Number(pEl.dataset.para),
-          text
-        };
-      }
+      const pEl = (node?.nodeType === 3 ? node.parentElement : node)?.closest?.('p[data-page]');
+      if (pEl) lastSelectionRef.current = { pageNum: Number(pEl.dataset.page), paraIdx: Number(pEl.dataset.para), text };
     };
     document.addEventListener("selectionchange", handleSelectionChange);
     return () => document.removeEventListener("selectionchange", handleSelectionChange);
@@ -688,10 +569,44 @@ function App() {
   useEffect(() => saveStorage("pm_activeFolder", activeFolder), [activeFolder]);
   useEffect(() => saveStorage("pm_customFolders", customFolders), [customFolders]);
   useEffect(() => saveStorage("pm_expandedFolders", expandedFolders), [expandedFolders]);
+  useEffect(() => saveStorage("pm_folderOrder", folderOrder), [folderOrder]);
+  useEffect(() => saveStorage("pm_paperOrder", paperOrder), [paperOrder]);
   useEffect(() => saveStorage("pm_mobileTab", mobileTab), [mobileTab]);
   useEffect(() => saveStorage("pm_chats", chatHistoryMap), [chatHistoryMap]);
   useEffect(() => saveStorage("pm_readingTheme", readingTheme), [readingTheme]);
   useEffect(() => saveStorage("pm_readingFontSize", readingFontSize), [readingFontSize]);
+
+  const handleMemoKeyDown = (e) => {
+    if (e.nativeEvent?.isComposing) return;
+    const editor = memoEditorRef.current;
+    if (!editor) return;
+    const mod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+
+    if (mod && !e.shiftKey && key === "z") {
+      e.preventDefault();
+      const h = memoHistoryRef.current;
+      if (h.index > 0) { h.index -= 1; editor.innerHTML = h.stack[h.index]; setMemoText(h.stack[h.index]); }
+      return;
+    }
+    if ((mod && key === "y") || (mod && e.shiftKey && key === "z")) {
+      e.preventDefault();
+      const h = memoHistoryRef.current;
+      if (h.index < h.stack.length - 1) { h.index += 1; editor.innerHTML = h.stack[h.index]; setMemoText(h.stack[h.index]); }
+      return;
+    }
+    if (mod && !e.shiftKey && !e.altKey) {
+      if (key === "b") { e.preventDefault(); handleApplyRichCommand("bold"); return; }
+      if (key === "i") { e.preventDefault(); handleApplyRichCommand("italic"); return; }
+      if (key === "u") { e.preventDefault(); handleApplyRichCommand("underline"); return; }
+    }
+    if (e.altKey && e.shiftKey && (e.code === "Digit5" || key === "5" || key === "%")) {
+      e.preventDefault(); handleApplyRichCommand("strikeThrough"); return;
+    }
+    if (mod && e.shiftKey && (e.code === "Digit8" || key === "8" || key === "*")) {
+      e.preventDefault(); handleInsertPrefix("- "); return;
+    }
+  };
 
   const handleApplyMemoColor = (colorCode) => {
     setActiveMemoColor(colorCode);
@@ -699,12 +614,10 @@ function App() {
     const editor = memoEditorRef.current;
     if (!editor) return;
     editor.focus();
-    try {
-      document.execCommand("styleWithCSS", false, true);
-      document.execCommand("foreColor", false, colorCode);
-    } catch (e) {
-      document.execCommand("foreColor", false, colorCode);
-    }
+    pushMemoHistory(editor.innerHTML);
+    try { document.execCommand("styleWithCSS", false, true); document.execCommand("foreColor", false, colorCode); }
+    catch { document.execCommand("foreColor", false, colorCode); }
+    pushMemoHistory(editor.innerHTML);
     setMemoText(editor.innerHTML);
   };
 
@@ -714,12 +627,10 @@ function App() {
     const editor = memoEditorRef.current;
     if (!editor) return;
     editor.focus();
-    try {
-      document.execCommand("styleWithCSS", false, false);
-      document.execCommand(command, false, null);
-    } catch (e) {
-      document.execCommand(command, false, null);
-    }
+    pushMemoHistory(editor.innerHTML);
+    try { document.execCommand("styleWithCSS", false, false); document.execCommand(command, false, null); }
+    catch { document.execCommand(command, false, null); }
+    pushMemoHistory(editor.innerHTML);
     setMemoText(editor.innerHTML);
   };
 
@@ -729,24 +640,23 @@ function App() {
     const editor = memoEditorRef.current;
     if (!editor) return;
     editor.focus();
+    pushMemoHistory(editor.innerHTML);
     const sel = window.getSelection();
     const selectedText = sel ? sel.toString() : "";
     if (selectedText) {
       const lines = selectedText.split(/\r?\n/);
-      const nonEmptyLines = lines.filter((line) => line.trim() !== "");
-      const allHavePrefix =
-        nonEmptyLines.length > 0 && nonEmptyLines.every((line) => line.startsWith(prefix));
-      const formatted = lines
-        .map((line) => {
-          if (line.trim() === "") return line;
-          if (allHavePrefix) return line.slice(prefix.length);
-          return line.startsWith(prefix) ? line : `${prefix}${line}`;
-        })
-        .join("\n");
+      const nonEmpty = lines.filter((line) => line.trim() !== "");
+      const allHave = nonEmpty.length > 0 && nonEmpty.every((line) => line.startsWith(prefix));
+      const formatted = lines.map((line) => {
+        if (line.trim() === "") return line;
+        if (allHave) return line.slice(prefix.length);
+        return line.startsWith(prefix) ? line : `${prefix}${line}`;
+      }).join("\n");
       document.execCommand("insertText", false, formatted);
     } else {
       document.execCommand("insertText", false, prefix);
     }
+    pushMemoHistory(editor.innerHTML);
     setMemoText(editor.innerHTML);
   };
 
@@ -756,6 +666,7 @@ function App() {
     const editor = memoEditorRef.current;
     if (!editor) return;
     editor.focus();
+    pushMemoHistory(editor.innerHTML);
     const sel = window.getSelection();
     const selectedText = sel ? sel.toString() : "";
     if (selectedText) {
@@ -773,6 +684,7 @@ function App() {
         }
       }
     }
+    pushMemoHistory(editor.innerHTML);
     setMemoText(editor.innerHTML);
   };
 
@@ -782,9 +694,8 @@ function App() {
     setPapers(prev => prev.map(p => (p.id === paperId ? { ...p, highlights: nextHighlights } : p)));
     setSelectedPaper(prev => (prev && prev.id === paperId ? { ...prev, highlights: nextHighlights } : prev));
     if (isPersonalMode) {
-      try {
-        await updateDoc(doc(db, "papers", paperId), { highlights: nextHighlights });
-      } catch (e) { console.error("Failed to sync highlights:", e); }
+      try { await updateDoc(doc(db, "papers", paperId), { highlights: nextHighlights }); }
+      catch (e) { console.error("Failed to sync highlights:", e); }
     }
   };
 
@@ -794,28 +705,74 @@ function App() {
     const sel = window.getSelection();
     if (sel && !sel.isCollapsed && sel.toString().trim()) {
       const node = sel.anchorNode;
-      const el = node?.nodeType === 3 ? node.parentElement : node;
-      const pEl = el?.closest?.('p[data-page]');
-      if (pEl) {
-        target = { pageNum: Number(pEl.dataset.page), paraIdx: Number(pEl.dataset.para), text: sel.toString().trim() };
-      }
+      const pEl = (node?.nodeType === 3 ? node.parentElement : node)?.closest?.('p[data-page]');
+      if (pEl) target = { pageNum: Number(pEl.dataset.page), paraIdx: Number(pEl.dataset.para), text: sel.toString().trim() };
     }
     if (!target) target = lastSelectionRef.current;
-    if (!target || !target.text) {
-      alert("先にリーディングモード内の文章をなぞって選択してください。");
-      return;
-    }
-    const newHl = { id: `hl-${Date.now()}`, ...target, color: colorCode };
-    const nextHighlights = [...highlights, newHl];
+    if (!target || !target.text) { alert("先にリーディングモード内の文章をなぞって選択してください。"); return; }
+    const nextHighlights = [...highlights, { id: `hl-${Date.now()}`, ...target, color: colorCode }];
     lastSelectionRef.current = null;
     if (sel) sel.removeAllRanges();
     await syncHighlights(selectedPaper.id, nextHighlights);
   };
 
   const handleRemoveHighlight = async (hlId) => {
-    if (!selectedPaper) return;
-    if (!window.confirm("このマーカーを削除しますか？")) return;
+    if (!selectedPaper || !window.confirm("このマーカーを削除しますか？")) return;
     await syncHighlights(selectedPaper.id, highlights.filter(h => h.id !== hlId));
+  };
+
+  const handleTranslateSelection = async () => {
+    const sel = window.getSelection();
+    const text = (sel && !sel.isCollapsed ? sel.toString().trim() : "") || lastSelectionRef.current?.text || "";
+    if (!text) { alert("先にリーディングモード内の文章をなぞって選択してください。"); return; }
+    lastSelectionRef.current = null;
+    if (sel) sel.removeAllRanges();
+    setTranslationBox({ source: text, translated: "", loading: true });
+    try {
+      const prompt = `Translate the following excerpt from an academic paper into ${aiLanguage} naturally and accurately. Output only the translation.\n\n${text}`;
+      const translated = await generateWithFallback(prompt);
+      setTranslationBox({ source: text, translated: translated.trim(), loading: false });
+    } catch {
+      setTranslationBox({ source: text, translated: "翻訳に失敗しました。少し時間をおいて再度お試しください。", loading: false });
+    }
+  };
+
+  const handleAskAiAboutTranslation = async () => {
+    if (!selectedPaper || !translationBox || translationBox.loading) return;
+    const nextChat = [
+      ...chat,
+      { role: 'user', text: `【翻訳した箇所】\n> ${translationBox.source}` },
+      { role: 'ai', text: `**翻訳 (${aiLanguage})**\n${translationBox.translated}\n\nこの部分について気になる表現や内容があれば聞いてください！` }
+    ];
+    await updateChatForPaper(selectedPaper.id, nextChat);
+    setTranslationBox(null);
+    if (isMobile) { setMobileTab("ai"); }
+    else {
+      if (leftWidth >= 100) setLeftWidth(50);
+      if (aiHeightPercent <= 0) setAiHeightPercent(50);
+    }
+  };
+
+  const handleToggleSpeech = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("このブラウザは音声読み上げに対応していません。");
+      return;
+    }
+    if (isSpeaking) { window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    const sel = window.getSelection();
+    const selectedText = sel && !sel.isCollapsed ? sel.toString().trim() : "";
+    const chunks = selectedText ? [selectedText] : (readingPages || []).flatMap((p) => p.paragraphs).filter(Boolean);
+    if (chunks.length === 0) { alert("読み上げる文章がありません。"); return; }
+    window.speechSynthesis.cancel();
+    setIsSpeaking(true);
+    chunks.forEach((chunk, idx) => {
+      const utter = new SpeechSynthesisUtterance(chunk);
+      utter.lang = /[ぁ-んァ-ヶ一-龠]/.test(chunk) ? "ja-JP" : "en-US";
+      utter.rate = 1.0;
+      if (idx === chunks.length - 1) utter.onend = () => setIsSpeaking(false);
+      utter.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utter);
+    });
   };
 
   const handleToggleReadingMode = async () => {
@@ -839,14 +796,10 @@ function App() {
   const handleOpenReadingNewTab = async () => {
     const title = selectedPaper?.title || "Reading Mode";
     const newWin = window.open("", "_blank");
-    if (!newWin) {
-      alert("ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。");
-      return;
-    }
+    if (!newWin) { alert("ポップアップがブロックされました。"); return; }
     newWin.document.open();
-    newWin.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>読み込み中...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ リーディングモードを準備しています...</div></body></html>`);
+    newWin.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>読み込み中...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ リーディングモードを準備しています...</div></body></html>`);
     newWin.document.close();
-
     try {
       let pagesToShow = readingPages;
       if (!pagesToShow && currentPdfUrl) {
@@ -854,27 +807,13 @@ function App() {
         setReadingPages(pagesToShow);
       } else if (!pagesToShow && selectedPaper?.abstract) {
         const plainMemo = memoText.replace(/<[^>]+>/g, " ").trim();
-        pagesToShow = [{
-          pageNum: 1,
-          paragraphs: [
-            ...(selectedPaper.abstract || "").split("\n").filter(Boolean),
-            ...(plainMemo ? ["--- Notes ---", plainMemo] : [])
-          ]
-        }];
+        pagesToShow = [{ pageNum: 1, paragraphs: [...(selectedPaper.abstract || "").split("\n").filter(Boolean), ...(plainMemo ? ["--- Notes ---", plainMemo] : [])] }];
       }
-      if (!pagesToShow || pagesToShow.length === 0) {
-        newWin.close();
-        alert("表示できるPDFまたはテキストがありません。");
-        return;
-      }
-      const html = buildReadingModeHtml(title, pagesToShow, readingTheme, readingFontSize, highlights);
+      if (!pagesToShow || pagesToShow.length === 0) { newWin.close(); alert("表示できるPDFまたはテキストがありません。"); return; }
       newWin.document.open();
-      newWin.document.write(html);
+      newWin.document.write(buildReadingModeHtml(title, pagesToShow, readingTheme, readingFontSize, highlights));
       newWin.document.close();
-    } catch (err) {
-      newWin.close();
-      alert("別タブでのリーディングモード生成に失敗しました: " + err.message);
-    }
+    } catch (err) { newWin.close(); alert("別タブ生成に失敗しました: " + err.message); }
   };
 
   const updateChatForPaper = async (paperId, newChatArray) => {
@@ -884,9 +823,8 @@ function App() {
     setPapers(prev => prev.map(p => (p.id === paperId ? { ...p, chat: newChatArray } : p)));
     setSelectedPaper(prev => (prev && prev.id === paperId ? { ...prev, chat: newChatArray } : prev));
     if (isPersonalMode) {
-      try {
-        await updateDoc(doc(db, "papers", paperId), { chat: newChatArray });
-      } catch (error) { console.error("Failed to sync chat to Firestore:", error); }
+      try { await updateDoc(doc(db, "papers", paperId), { chat: newChatArray }); }
+      catch (error) { console.error("Failed to sync chat:", error); }
     }
   };
 
@@ -895,21 +833,15 @@ function App() {
       if (window.confirm("デモモード（面接官・閲覧者向け表示）に戻しますか？")) {
         localStorage.removeItem("paperManagerUnlocked");
         hasRestoredForMode.current = null;
-        setIsPersonalMode(false);
-        setSelectedPaper(null);
-        setIsAdding(false);
+        setIsPersonalMode(false); setSelectedPaper(null); setIsAdding(false);
       }
     } else {
       const input = window.prompt("自分専用モードの合言葉を入力してください：");
       if (input === SECRET_PASSCODE) {
         localStorage.setItem("paperManagerUnlocked", "true");
         hasRestoredForMode.current = null;
-        setIsPersonalMode(true);
-        setSelectedPaper(null);
-        setIsAdding(false);
-      } else if (input !== null) {
-        alert("合言葉が違います。");
-      }
+        setIsPersonalMode(true); setSelectedPaper(null); setIsAdding(false);
+      } else if (input !== null) alert("合言葉が違います。");
     }
   };
 
@@ -942,27 +874,20 @@ function App() {
   const checkSavedPdfs = async (papersList) => {
     const statusMap = {};
     for (const p of papersList) {
-      try { if (await getPdfLocally(p.id)) statusMap[p.id] = true; } catch (e) {}
+      try { if (await getPdfLocally(p.id)) statusMap[p.id] = true; } catch {}
     }
     setSavedPdfIds(statusMap);
   };
 
   const fetchPapers = async () => {
-    if (!isPersonalMode) {
-      setPapers(DEMO_PAPERS);
-      setSavedPdfIds({});
-      return DEMO_PAPERS;
-    }
+    if (!isPersonalMode) { setPapers(DEMO_PAPERS); setSavedPdfIds({}); return DEMO_PAPERS; }
     try {
       const snap = await getDocs(collection(db, "papers"));
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setPapers(data);
       await checkSavedPdfs(data);
       return data;
-    } catch (error) {
-      console.error("Failed to fetch data", error);
-      return [];
-    }
+    } catch (error) { console.error("Failed to fetch data", error); return []; }
   };
 
   useEffect(() => {
@@ -982,10 +907,7 @@ function App() {
   }, [isPersonalMode]);
 
   useEffect(() => {
-    const closeMenus = () => {
-      setOpenMenuId(null);
-      setIsMdMenuOpen(false);
-    };
+    const closeMenus = () => { setOpenMenuId(null); setIsMdMenuOpen(false); };
     window.addEventListener('click', closeMenus);
     return () => window.removeEventListener('click', closeMenus);
   }, []);
@@ -1006,17 +928,12 @@ function App() {
       setSelectedPaper(prev => (prev && prev.id === paperId ? { ...prev, memo: textToSave } : prev));
       isEditingMemoRef.current = false;
       setMemoStatus("✓");
-    } catch (error) {
-      setMemoStatus("!");
-    }
+    } catch { setMemoStatus("!"); }
   };
 
   useEffect(() => {
     if (!selectedPaper) return;
-    if (memoText === (selectedPaper.memo || "")) {
-      isEditingMemoRef.current = false;
-      return;
-    }
+    if (memoText === (selectedPaper.memo || "")) { isEditingMemoRef.current = false; return; }
     isEditingMemoRef.current = true;
     setMemoStatus("…");
     const timer = setTimeout(() => handleSaveMemo(selectedPaper.id, memoText), 1200);
@@ -1038,8 +955,31 @@ function App() {
   };
   const allFolderPaths = getAllFolderPaths();
 
-  const handleDropOnFolder = async (targetPath) => {
-    setDragOverTarget(null);
+  const handleDropOnPaper = async (targetPaper, pos) => {
+    setDragOverInfo(null);
+    if (!draggedItem || draggedItem.type !== 'paper' || draggedItem.id === targetPaper.id) {
+      setDraggedItem(null);
+      return;
+    }
+    const targetFolder = targetPaper.folder || "Uncategorized";
+    const allPaperIds = papers.map(p => p.id);
+    setPaperOrder(prev => reorderList(allPaperIds, prev, draggedItem.id, targetPaper.id, pos));
+
+    if (draggedItem.currentFolder !== targetFolder) {
+      if (!isPersonalMode) {
+        setPapers(prev => prev.map(p => (p.id === draggedItem.id ? { ...p, folder: targetFolder } : p)));
+      } else {
+        try {
+          await updateDoc(doc(db, "papers", draggedItem.id), { folder: targetFolder });
+          await fetchPapers();
+        } catch (e) { alert("移動に失敗しました: " + e.message); }
+      }
+    }
+    setDraggedItem(null);
+  };
+
+  const handleDropOnFolder = async (targetPath, pos = "inside") => {
+    setDragOverInfo(null);
     if (!draggedItem) return;
     if (draggedItem.type === 'paper') {
       const dest = targetPath === "ROOT" ? "Uncategorized" : targetPath;
@@ -1063,6 +1003,16 @@ function App() {
       const src = draggedItem.path;
       setDraggedItem(null);
       if (src === "Uncategorized" || src === targetPath) return;
+
+      if ((pos === "before" || pos === "after") && targetPath !== "ROOT") {
+        const srcParent = src.includes('/') ? src.slice(0, src.lastIndexOf('/')) : "";
+        const tgtParent = targetPath.includes('/') ? targetPath.slice(0, targetPath.lastIndexOf('/')) : "";
+        if (srcParent === tgtParent) {
+          setFolderOrder(prev => reorderList(allFolderPaths, prev, src, targetPath, pos));
+          return;
+        }
+      }
+
       if (targetPath !== "ROOT" && targetPath.startsWith(src + '/')) return;
       const leaf = src.split('/').pop();
       const newPath = targetPath === "ROOT" ? leaf : `${targetPath}/${leaf}`;
@@ -1130,9 +1080,7 @@ function App() {
     setLoadingMessage("Renaming folder...");
     try {
       const targets = papers.filter(p => p.folder === oldPath || (p.folder || "").startsWith(oldPath + '/'));
-      for (const p of targets) {
-        await updateDoc(doc(db, "papers", p.id), { folder: p.folder === oldPath ? newPath : newPath + p.folder.slice(oldPath.length) });
-      }
+      for (const p of targets) await updateDoc(doc(db, "papers", p.id), { folder: p.folder === oldPath ? newPath : newPath + p.folder.slice(oldPath.length) });
       setCustomFolders(prev => prev.map(f => (f === oldPath ? newPath : f.startsWith(oldPath + '/') ? newPath + f.slice(oldPath.length) : f)));
       await fetchPapers();
     } catch (e) { alert("名前の変更に失敗しました: " + e.message); }
@@ -1215,26 +1163,17 @@ function App() {
       const prompt = `Please summarize the following paper in about 3 sentences. Write the summary entirely in ${aiLanguage}. Use clean Markdown formatting (bold, bullets if helpful) and LaTeX wrapped in $$...$$ or $...$ for equations.\nTitle: ${paper.title}\nContent: ${paper.abstract}`;
       const responseText = await generateWithFallback(prompt);
       await updateChatForPaper(paper.id, [{ role: 'ai', text: responseText }]);
-    } catch (e) {
-      await updateChatForPaper(paper.id, [{ role: 'ai', text: "Failed to call Gemini API." }]);
-    }
+    } catch { await updateChatForPaper(paper.id, [{ role: 'ai', text: "Failed to call Gemini API." }]); }
     setLoading(false);
   };
 
   const handleSelectPaper = async (paper, options = {}) => {
     const modeKey = isPersonalMode ? "personal" : "demo";
     saveStorage(`pm_lastPaperId_${modeKey}`, paper.id);
-
     isEditingMemoRef.current = false;
-    setIsAdding(false);
-    setIsMobileMenuOpen(false);
-    setSelectedPaper(paper);
-    setActiveFolder(paper.folder || "");
-    setCurrentPdfUrl(null);
-    setMemoText(paper.memo || "");
-    setMemoStatus("");
-    setHighlights(paper.highlights || []);
-
+    setIsAdding(false); setIsMobileMenuOpen(false); setSelectedPaper(paper);
+    setActiveFolder(paper.folder || ""); setCurrentPdfUrl(null);
+    setMemoText(paper.memo || ""); setMemoStatus(""); setHighlights(paper.highlights || []);
     let latestPaper = paper;
 
     if (isPersonalMode) {
@@ -1242,17 +1181,14 @@ function App() {
         const snap = await getDoc(doc(db, "papers", paper.id));
         if (snap.exists()) {
           latestPaper = { id: snap.id, ...snap.data() };
-          setSelectedPaper(latestPaper);
-          setMemoText(latestPaper.memo || "");
-          setHighlights(latestPaper.highlights || []);
+          setSelectedPaper(latestPaper); setMemoText(latestPaper.memo || ""); setHighlights(latestPaper.highlights || []);
           setPapers(prev => prev.map(p => (p.id === latestPaper.id ? latestPaper : p)));
         }
       } catch (e) { console.error("Failed to fetch latest paper:", e); }
-
       try {
         const savedFile = await getPdfLocally(paper.id);
         if (savedFile) setCurrentPdfUrl(URL.createObjectURL(savedFile));
-      } catch (e) {}
+      } catch {}
     }
 
     if (latestPaper.chat && latestPaper.chat.length > 0 && !options.forceRefresh) {
@@ -1260,13 +1196,8 @@ function App() {
       setChatHistoryMap(prev => ({ ...prev, [latestPaper.id]: latestPaper.chat }));
       return;
     }
-
     const localChat = loadStorage("pm_chats", {})[latestPaper.id];
-    if (localChat && localChat.length > 0 && !options.forceRefresh) {
-      await updateChatForPaper(latestPaper.id, localChat);
-      return;
-    }
-
+    if (localChat && localChat.length > 0 && !options.forceRefresh) { await updateChatForPaper(latestPaper.id, localChat); return; }
     setChat([]);
     await runInitialSummary(latestPaper);
   };
@@ -1276,30 +1207,22 @@ function App() {
     const question = inputText;
     const newChat = [...chat, { role: 'user', text: question }];
     await updateChatForPaper(selectedPaper.id, newChat);
-    setInputText("");
-    setLoading(true);
-    setLoadingMessage("Gemini is generating an answer...");
-
+    setInputText(""); setLoading(true); setLoadingMessage("Gemini is generating an answer...");
     try {
       const plainMemo = memoText.replace(/<[^>]+>/g, " ").trim();
       const contextText = selectedPaper.abstract || plainMemo || "No abstract provided.";
-      const prompt = `This is a question regarding the paper "${selectedPaper.title}". Please answer based on the following content. Write your answer entirely in ${aiLanguage}. Use Markdown for clear structure and LaTeX syntax wrapped in $$...$$ for display equations and $...$ for inline variables/equations.\nContent: ${contextText}\n\nQuestion: ${question}`;
+      const recentHistory = chat.slice(-4).map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.text}`).join("\n");
+      const prompt = `This is a question regarding the paper "${selectedPaper.title}". Please answer based on the following content and recent conversation. Write your answer entirely in ${aiLanguage}. Use Markdown for clear structure and LaTeX syntax wrapped in $$...$$ for display equations and $...$ for inline variables/equations.\nContent: ${contextText}\n\nRecent Conversation:\n${recentHistory}\n\nQuestion: ${question}`;
       const responseText = await generateWithFallback(prompt, "pro");
       await updateChatForPaper(selectedPaper.id, [...newChat, { role: 'ai', text: responseText }]);
-    } catch (e) {
-      await updateChatForPaper(selectedPaper.id, [...newChat, { role: 'ai', text: "An error occurred." }]);
-    }
+    } catch { await updateChatForPaper(selectedPaper.id, [...newChat, { role: 'ai', text: "An error occurred." }]); }
     setLoading(false);
   };
 
-  const handlePdfUpload = async (e) => {
-    const file = e.target.files[0];
+  const processPdfFile = async (file) => {
     if (!file) return;
-    setLoading(true);
-    setLoadingMessage("Extracting text from PDF...");
-    setPendingPdfFile(file);
-    setCurrentPdfUrl(URL.createObjectURL(file));
-
+    setLoading(true); setLoadingMessage("Extracting text from PDF...");
+    setPendingPdfFile(file); setCurrentPdfUrl(URL.createObjectURL(file));
     try {
       const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
       let extractedText = "";
@@ -1336,14 +1259,30 @@ Abstract:
 Paper Text:
 ${extractedText}`;
       const text = await generateWithFallback(prompt);
-      setNewTitle(file.name.replace('.pdf', ''));
+      setNewTitle(file.name.replace(/\.pdf$/i, ''));
       setNewAbstract(`[Extracted by Gemini]\n\n${text}`);
-    } catch (error) {
-      alert("Failed to read PDF: " + error.message);
-    } finally {
-      setLoading(false);
-      e.target.value = '';
+    } catch (error) { alert("Failed to read PDF: " + error.message); }
+    finally { setLoading(false); }
+  };
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await processPdfFile(file);
+    e.target.value = '';
+  };
+
+  const handleDropPdfFile = async (file, targetFolder = null) => {
+    if (!file || (!file.type.includes("pdf") && !file.name.toLowerCase().endsWith(".pdf"))) {
+      alert("PDFファイルをドロップしてください。");
+      return;
     }
+    const destFolder = targetFolder && targetFolder !== "ROOT" && targetFolder !== "Uncategorized"
+      ? targetFolder
+      : activeFolder && activeFolder !== "Uncategorized" ? activeFolder : "";
+    setIsAdding(true); setIsMobileMenuOpen(false); setSelectedPaper(null);
+    setNewTitle(""); setNewAbstract(""); setNewFolder(destFolder);
+    await processPdfFile(file);
   };
 
   const handleViewerPdfLoad = async (e) => {
@@ -1351,10 +1290,7 @@ ${extractedText}`;
     if (!file) return;
     setCurrentPdfUrl(URL.createObjectURL(file));
     if (selectedPaper && isPersonalMode) {
-      try {
-        await savePdfLocally(selectedPaper.id, file);
-        setSavedPdfIds(prev => ({ ...prev, [selectedPaper.id]: true }));
-      } catch (e) {}
+      try { await savePdfLocally(selectedPaper.id, file); setSavedPdfIds(prev => ({ ...prev, [selectedPaper.id]: true })); } catch {}
     }
   };
 
@@ -1367,12 +1303,9 @@ ${extractedText}`;
       setExpandedFolders(prev => ({ ...prev, [folderName]: true }));
       return;
     }
-    setLoading(true);
-    setLoadingMessage("Saving to database...");
+    setLoading(true); setLoadingMessage("Saving to database...");
     try {
-      const docRef = await addDoc(collection(db, "papers"), {
-        title: newTitle, abstract: newAbstract, memo: "", folder: folderName, highlights: [], createdAt: new Date()
-      });
+      const docRef = await addDoc(collection(db, "papers"), { title: newTitle, abstract: newAbstract, memo: "", folder: folderName, highlights: [], createdAt: new Date() });
       if (pendingPdfFile) await savePdfLocally(docRef.id, pendingPdfFile);
       setNewTitle(""); setNewAbstract(""); setNewFolder(""); setPendingPdfFile(null); setIsAdding(false);
       setExpandedFolders(prev => ({ ...prev, [folderName]: true }));
@@ -1382,29 +1315,66 @@ ${extractedText}`;
   };
 
   const renderTreeNodes = (parentPath = "", depth = 0) => {
-    const childFolders = allFolderPaths.filter(path => {
-      if (parentPath === "") return !path.includes('/');
-      return path.startsWith(parentPath + '/') && !path.slice(parentPath.length + 1).includes('/');
-    });
-    const directPapers = parentPath === "" ? [] : papers.filter(p => (p.folder || "Uncategorized") === parentPath);
+    const childFolders = allFolderPaths
+      .filter(path => (parentPath === "" ? !path.includes('/') : path.startsWith(parentPath + '/') && !path.slice(parentPath.length + 1).includes('/')))
+      .sort((a, b) => {
+        if (a === "Uncategorized") return 1;
+        if (b === "Uncategorized") return -1;
+        const ia = folderOrder.indexOf(a);
+        const ib = folderOrder.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      });
+
+    const directPapers = (parentPath === "" ? [] : papers.filter(p => (p.folder || "Uncategorized") === parentPath))
+      .slice()
+      .sort((a, b) => {
+        const ia = paperOrder.indexOf(a.id);
+        const ib = paperOrder.indexOf(b.id);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return 0;
+      });
 
     return (
       <>
         {directPapers.map(paper => {
           const paperMenuKey = `paper-${paper.id}`;
           const isSelected = selectedPaper?.id === paper.id;
+          const isOverBefore = dragOverInfo?.type === 'paper' && dragOverInfo?.id === paper.id && dragOverInfo?.pos === 'before';
+          const isOverAfter = dragOverInfo?.type === 'paper' && dragOverInfo?.id === paper.id && dragOverInfo?.pos === 'after';
+
           return (
             <div
               key={paper.id}
               draggable={!isMobile}
               onDragStart={(e) => { e.stopPropagation(); setDraggedItem({ type: 'paper', id: paper.id, currentFolder: paper.folder || "Uncategorized" }); }}
-              onDragEnd={() => { setDraggedItem(null); setDragOverTarget(null); }}
+              onDragEnd={() => { setDraggedItem(null); setDragOverInfo(null); }}
+              onDragOver={(e) => {
+                if (draggedItem?.type !== 'paper' || draggedItem.id === paper.id) return;
+                e.preventDefault(); e.stopPropagation();
+                const rect = e.currentTarget.getBoundingClientRect();
+                const pos = e.clientY - rect.top < rect.height / 2 ? 'before' : 'after';
+                setDragOverInfo({ type: 'paper', id: paper.id, pos });
+              }}
+              onDragLeave={() => { if (dragOverInfo?.type === 'paper' && dragOverInfo?.id === paper.id) setDragOverInfo(null); }}
+              onDrop={(e) => {
+                if (draggedItem?.type !== 'paper') return;
+                e.preventDefault(); e.stopPropagation();
+                const pos = dragOverInfo?.id === paper.id ? dragOverInfo.pos : 'after';
+                handleDropOnPaper(paper, pos);
+              }}
               onClick={() => handleSelectPaper(paper)}
               style={{
                 position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: isMobile ? '10px 6px' : '6px', paddingLeft: `${12 + depth * 16}px`, borderRadius: '6px', cursor: 'pointer',
                 fontSize: isMobile ? '14px' : '13px', backgroundColor: isSelected ? '#e8f0fe' : 'transparent',
                 color: isSelected ? '#1a73e8' : '#333', fontWeight: isSelected ? 'bold' : 'normal', marginBottom: '2px',
+                borderTop: isOverBefore ? '2px solid #1a73e8' : '2px solid transparent',
+                borderBottom: isOverAfter ? '2px solid #1a73e8' : '2px solid transparent',
                 opacity: draggedItem?.type === 'paper' && draggedItem?.id === paper.id ? 0.4 : 1
               }}
             >
@@ -1412,10 +1382,7 @@ ${extractedText}`;
                 <span style={{ fontSize: '12px', flexShrink: 0 }}>{savedPdfIds[paper.id] ? '📄' : '📝'}</span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{paper.title}</span>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === paperMenuKey ? null : paperMenuKey); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', fontSize: '15px', color: '#666', flexShrink: 0 }}
-              >⋮</button>
+              <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === paperMenuKey ? null : paperMenuKey); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', fontSize: '15px', color: '#666', flexShrink: 0 }}>⋮</button>
               {openMenuId === paperMenuKey && (
                 <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', right: '8px', top: '30px', zIndex: 100, backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', width: '155px', overflow: 'hidden', fontWeight: 'normal' }}>
                   <div onClick={() => { setOpenMenuId(null); handleRenamePaper(paper); }} style={{ padding: '10px 12px', fontSize: '13px', cursor: 'pointer', borderBottom: '1px solid #eee', color: '#333' }}>✏️ Rename Paper</div>
@@ -1430,7 +1397,10 @@ ${extractedText}`;
         {childFolders.map(folderPath => {
           const name = folderPath.split('/').pop();
           const isExpanded = expandedFolders[folderPath] !== false;
-          const isDragOver = dragOverTarget === folderPath;
+          const isOverThis = dragOverInfo?.type === 'folder' && dragOverInfo?.id === folderPath;
+          const isOverInside = isOverThis && dragOverInfo.pos === 'inside';
+          const isOverBefore = isOverThis && dragOverInfo.pos === 'before';
+          const isOverAfter = isOverThis && dragOverInfo.pos === 'after';
           const menuKey = `folder-${folderPath}`;
           const totalCount = papers.filter(p => (p.folder || "Uncategorized") === folderPath || (p.folder || "").startsWith(folderPath + '/')).length;
 
@@ -1440,18 +1410,39 @@ ${extractedText}`;
                 style={{ position: 'relative' }}
                 draggable={!isMobile && folderPath !== "Uncategorized"}
                 onDragStart={(e) => { e.stopPropagation(); setDraggedItem({ type: 'folder', path: folderPath }); }}
-                onDragEnd={() => { setDraggedItem(null); setDragOverTarget(null); }}
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverTarget(folderPath); }}
-                onDragLeave={() => { if (dragOverTarget === folderPath) setDragOverTarget(null); }}
-                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDropOnFolder(folderPath); }}
+                onDragEnd={() => { setDraggedItem(null); setDragOverInfo(null); }}
+                onDragOver={(e) => {
+                  e.preventDefault(); e.stopPropagation();
+                  if (draggedItem?.type === 'folder' && draggedItem.path !== folderPath && folderPath !== "Uncategorized") {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const ratio = (e.clientY - rect.top) / rect.height;
+                    const pos = ratio < 0.25 ? 'before' : ratio > 0.75 ? 'after' : 'inside';
+                    setDragOverInfo({ type: 'folder', id: folderPath, pos });
+                  } else {
+                    setDragOverInfo({ type: 'folder', id: folderPath, pos: 'inside' });
+                  }
+                }}
+                onDragLeave={() => { if (dragOverInfo?.type === 'folder' && dragOverInfo?.id === folderPath) setDragOverInfo(null); }}
+                onDrop={(e) => {
+                  e.preventDefault(); e.stopPropagation();
+                  setIsFileDragging(false);
+                  const droppedFile = e.dataTransfer?.files?.[0];
+                  if (droppedFile) { setDragOverInfo(null); handleDropPdfFile(droppedFile, folderPath); return; }
+                  const pos = isOverThis ? dragOverInfo.pos : 'inside';
+                  handleDropOnFolder(folderPath, pos);
+                }}
               >
                 <div
                   onClick={() => { setActiveFolder(folderPath); setExpandedFolders(prev => ({ ...prev, [folderPath]: !isExpanded })); }}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: isMobile ? '9px 6px' : '6px', paddingLeft: `${6 + depth * 16}px`, borderRadius: '6px', cursor: 'pointer',
-                    fontSize: isMobile ? '14px' : '13px', fontWeight: 'bold', backgroundColor: isDragOver ? '#d2e3fc' : 'transparent',
-                    border: isDragOver ? '2px dashed #1a73e8' : '2px solid transparent', color: '#222', marginBottom: '2px',
+                    fontSize: isMobile ? '14px' : '13px', fontWeight: 'bold',
+                    backgroundColor: isOverInside ? '#d2e3fc' : 'transparent',
+                    border: isOverInside ? '2px dashed #1a73e8' : '2px solid transparent',
+                    borderTop: isOverBefore ? '2px solid #1a73e8' : (isOverInside ? '2px dashed #1a73e8' : '2px solid transparent'),
+                    borderBottom: isOverAfter ? '2px solid #1a73e8' : (isOverInside ? '2px dashed #1a73e8' : '2px solid transparent'),
+                    color: '#222', marginBottom: '2px',
                     opacity: draggedItem?.type === 'folder' && draggedItem?.path === folderPath ? 0.4 : 1
                   }}
                 >
@@ -1462,10 +1453,7 @@ ${extractedText}`;
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                     <span style={{ fontSize: '11px', color: '#888', fontWeight: 'normal' }}>{totalCount}</span>
                     {folderPath !== "Uncategorized" && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === menuKey ? null : menuKey); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', fontSize: '15px', color: '#555' }}
-                      >⋮</button>
+                      <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === menuKey ? null : menuKey); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', fontSize: '15px', color: '#555' }}>⋮</button>
                     )}
                   </div>
                 </div>
@@ -1495,13 +1483,8 @@ ${extractedText}`;
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '4px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', flex: 1 }}>
-          <h2 onDoubleClick={handleToggleMode} style={{ fontSize: '17px', margin: 0, color: '#333', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            📚 Paper Manager
-          </h2>
-          <span
-            onClick={handleToggleMode}
-            style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '10px', backgroundColor: isPersonalMode ? '#e6f4ea' : '#e8f0fe', color: isPersonalMode ? '#137333' : '#1a73e8', fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}
-          >
+          <h2 onDoubleClick={handleToggleMode} style={{ fontSize: '17px', margin: 0, color: '#333', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>📚 Paper Manager</h2>
+          <span onClick={handleToggleMode} style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '10px', backgroundColor: isPersonalMode ? '#e6f4ea' : '#e8f0fe', color: isPersonalMode ? '#137333' : '#1a73e8', fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}>
             {isPersonalMode ? "🔓 Personal" : "Demo"}
           </span>
         </div>
@@ -1524,17 +1507,15 @@ ${extractedText}`;
             setLoading(false); setLoadingMessage(""); setCurrentPdfUrl(null);
           }}
           style={{ width: '100%', padding: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >
-          ＋ Add New Paper
-        </button>
+        >＋ Add New Paper</button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', borderTop: '1px solid #ddd', paddingTop: '8px' }}>
         <div
-          onDragOver={(e) => { e.preventDefault(); setDragOverTarget("ROOT"); }}
-          onDragLeave={() => setDragOverTarget(null)}
-          onDrop={(e) => { e.preventDefault(); handleDropOnFolder("ROOT"); }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 6px', marginBottom: '6px', borderRadius: '4px', backgroundColor: dragOverTarget === "ROOT" ? '#d2e3fc' : 'transparent', border: dragOverTarget === "ROOT" ? '1px dashed #1a73e8' : '1px solid transparent' }}
+          onDragOver={(e) => { e.preventDefault(); setDragOverInfo({ type: 'folder', id: 'ROOT', pos: 'inside' }); }}
+          onDragLeave={() => setDragOverInfo(null)}
+          onDrop={(e) => { e.preventDefault(); handleDropOnFolder("ROOT", "inside"); }}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 6px', marginBottom: '6px', borderRadius: '4px', backgroundColor: dragOverInfo?.id === "ROOT" ? '#d2e3fc' : 'transparent', border: dragOverInfo?.id === "ROOT" ? '1px dashed #1a73e8' : '1px solid transparent' }}
         >
           <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#666' }}>FOLDERS ({papers.length})</span>
           <button onClick={handleCreateRootFolder} style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>＋ Folder</button>
@@ -1552,12 +1533,8 @@ ${extractedText}`;
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             {currentPdfUrl && (
               <>
-                <button onClick={() => setIsReadingMode(false)} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: !isReadingMode ? 'bold' : 'normal', backgroundColor: !isReadingMode ? '#007bff' : '#fff', color: !isReadingMode ? '#fff' : '#333' }}>
-                  📄 PDF
-                </button>
-                <button onClick={handleToggleReadingMode} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: isReadingMode ? 'bold' : 'normal', backgroundColor: isReadingMode ? '#007bff' : '#fff', color: isReadingMode ? '#fff' : '#333' }}>
-                  📖 リーディング
-                </button>
+                <button onClick={() => setIsReadingMode(false)} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: !isReadingMode ? 'bold' : 'normal', backgroundColor: !isReadingMode ? '#007bff' : '#fff', color: !isReadingMode ? '#fff' : '#333' }}>📄 PDF</button>
+                <button onClick={handleToggleReadingMode} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: isReadingMode ? 'bold' : 'normal', backgroundColor: isReadingMode ? '#007bff' : '#fff', color: isReadingMode ? '#fff' : '#333' }}>📖 リーディング</button>
               </>
             )}
           </div>
@@ -1567,29 +1544,18 @@ ${extractedText}`;
               <>
                 <span style={{ fontSize: '11px', color: '#666', marginRight: '2px' }}>🖍️</span>
                 {HIGHLIGHT_COLORS.map(c => (
-                  <button
-                    key={c.code}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleAddHighlight(c.code)}
-                    style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px solid #999', backgroundColor: c.code, cursor: 'pointer', padding: 0 }}
-                    title={`選択したテキストに${c.name}色のマーカーを引く`}
-                  />
+                  <button key={c.code} onMouseDown={(e) => e.preventDefault()} onClick={() => handleAddHighlight(c.code)} style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px solid #999', backgroundColor: c.code, cursor: 'pointer', padding: 0 }} title={`選択したテキストに${c.name}色のマーカーを引く`} />
                 ))}
                 <span style={{ width: '1px', height: '18px', backgroundColor: '#ddd', margin: '0 2px' }} />
-                <button onClick={() => setReadingFontSize(s => Math.max(12, s - 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="文字を小さく">
-                  A-
-                </button>
-                <button onClick={() => setReadingFontSize(s => Math.min(26, s + 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="文字を大きく">
-                  A+
-                </button>
-                <button onClick={() => setReadingTheme(t => (t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light'))} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer' }} title="テーマ切替">
-                  {readingTheme === 'light' ? '☀️' : readingTheme === 'sepia' ? '📜' : '🌙'}
-                </button>
+                <button onClick={() => setReadingFontSize(s => Math.max(12, s - 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="文字を小さく">A-</button>
+                <button onClick={() => setReadingFontSize(s => Math.min(26, s + 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="文字を大きく">A+</button>
+                <button onClick={() => setReadingTheme(t => (t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light'))} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer' }} title="テーマ切替">{readingTheme === 'light' ? '☀️' : readingTheme === 'sepia' ? '📜' : '🌙'}</button>
+                <span style={{ width: '1px', height: '18px', backgroundColor: '#ddd', margin: '0 2px' }} />
+                <button onMouseDown={(e) => e.preventDefault()} onClick={handleTranslateSelection} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="選択したテキストを翻訳">🌐</button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={handleToggleSpeech} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: isSpeaking ? '1px solid #d9534f' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isSpeaking ? '#fdecea' : '#fff', color: '#333', cursor: 'pointer' }} title={isSpeaking ? "読み上げを停止" : "読み上げ（選択範囲／未選択なら全文）"}>{isSpeaking ? "⏹️" : "🔊"}</button>
               </>
             )}
-            <button onClick={handleOpenReadingNewTab} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #007bff', backgroundColor: '#fff', color: '#007bff', fontWeight: 'bold', cursor: 'pointer' }}>
-              ↗ 別タブで読む
-            </button>
+            <button onClick={handleOpenReadingNewTab} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #007bff', backgroundColor: '#fff', color: '#007bff', fontWeight: 'bold', cursor: 'pointer' }}>↗ 別タブで読む</button>
           </div>
         </div>
       )}
@@ -1598,40 +1564,24 @@ ${extractedText}`;
         isReadingMode ? (
           <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', backgroundColor: themeStyles.bg, color: themeStyles.text, padding: isMobile ? '18px 16px 60px' : '24px 32px 60px', boxSizing: 'border-box', fontFamily: 'Georgia, "Hiragino Mincho ProN", "Yu Mincho", serif', fontSize: `${readingFontSize}px`, lineHeight: '1.85', textAlign: 'left' }}>
             {readingLoading ? (
-              <div style={{ textAlign: 'center', marginTop: '40px', fontFamily: 'sans-serif', fontSize: '14px', color: themeStyles.sub }}>
-                ⏳ {readingProgress || "リーディングモードへ変換中..."}
-              </div>
+              <div style={{ textAlign: 'center', marginTop: '40px', fontFamily: 'sans-serif', fontSize: '14px', color: themeStyles.sub }}>⏳ {readingProgress || "リーディングモードへ変換中..."}</div>
             ) : (
               <div style={{ maxWidth: '720px', margin: '0 auto' }}>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '11px', color: themeStyles.sub, marginBottom: '12px' }}>
-                  💡 文字を選択して上の 🖍️ 色ボタンを押すとマーカーを引けます（マーカー部分をタップで削除／全デバイスリアルタイム同期）
+                  💡 文字を選択して上の 🖍️ マーカー・🌐 翻訳・🔊 読み上げが使えます（マーカーはタップで削除）
                 </div>
-                <h2 style={{ fontSize: '1.35em', lineHeight: '1.4', marginTop: 0, paddingBottom: '12px', color: themeStyles.text, borderBottom: `1px solid ${themeStyles.border}` }}>
-                  {selectedPaper?.title}
-                </h2>
+                <h2 style={{ fontSize: '1.35em', lineHeight: '1.4', marginTop: 0, paddingBottom: '12px', color: themeStyles.text, borderBottom: `1px solid ${themeStyles.border}` }}>{selectedPaper?.title}</h2>
                 {readingPages?.map((p) => (
                   <div key={p.pageNum} style={{ marginBottom: '28px' }}>
-                    <div style={{ fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 'bold', color: themeStyles.sub, letterSpacing: '0.08em', borderBottom: `1px dashed ${themeStyles.border}`, paddingBottom: '4px', marginBottom: '12px' }}>
-                      PAGE {p.pageNum}
-                    </div>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 'bold', color: themeStyles.sub, letterSpacing: '0.08em', borderBottom: `1px dashed ${themeStyles.border}`, paddingBottom: '4px', marginBottom: '12px' }}>PAGE {p.pageNum}</div>
                     {p.paragraphs.map((para, idx) => {
                       const paraHls = highlights.filter(h => h.pageNum === p.pageNum && h.paraIdx === idx);
-                      const segs = splitTextByHighlights(para, paraHls);
                       return (
                         <p key={idx} data-page={p.pageNum} data-para={idx} style={{ margin: '0 0 1em 0', wordBreak: 'break-word' }}>
-                          {segs.map((seg, sIdx) =>
+                          {splitTextByHighlights(para, paraHls).map((seg, sIdx) =>
                             seg.highlight ? (
-                              <mark
-                                key={sIdx}
-                                onClick={() => handleRemoveHighlight(seg.highlight.id)}
-                                title="タップしてマーカーを削除"
-                                style={{ backgroundColor: seg.highlight.color, color: '#1f2328', padding: '0 2px', borderRadius: '3px', cursor: 'pointer' }}
-                              >
-                                {seg.text}
-                              </mark>
-                            ) : (
-                              <span key={sIdx}>{seg.text}</span>
-                            )
+                              <mark key={sIdx} onClick={() => handleRemoveHighlight(seg.highlight.id)} title="タップしてマーカーを削除" style={{ backgroundColor: seg.highlight.color, color: '#1f2328', padding: '0 2px', borderRadius: '3px', cursor: 'pointer' }}>{seg.text}</mark>
+                            ) : (<span key={sIdx}>{seg.text}</span>)
                           )}
                         </p>
                       );
@@ -1662,31 +1612,39 @@ ${extractedText}`;
           </div>
         </div>
       )}
+
+      {isReadingMode && translationBox && (
+        <div style={{ flexShrink: 0, maxHeight: '35%', overflowY: 'auto', borderTop: '2px solid #007bff', backgroundColor: '#f8fbff', padding: '10px 14px', textAlign: 'left', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#007bff' }}>🌐 翻訳 ({aiLanguage})</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {!translationBox.loading && (
+                <button onClick={handleAskAiAboutTranslation} style={{ padding: '2px 6px', fontSize: '14px', borderRadius: '4px', border: '1px solid #007bff', backgroundColor: '#fff', cursor: 'pointer', lineHeight: 1 }} title="この原文と訳をAIチャットに送って質問する">🤖</button>
+              )}
+              <button onClick={() => setTranslationBox(null)} style={{ background: 'none', border: 'none', fontSize: '15px', cursor: 'pointer', color: '#666', padding: '0 4px' }} title="閉じる">✕</button>
+            </div>
+          </div>
+          <div style={{ fontSize: '13.5px', lineHeight: '1.6', color: '#1f2328', whiteSpace: 'pre-wrap' }}>
+            {translationBox.loading ? "⏳ 翻訳中..." : translationBox.translated}
+          </div>
+        </div>
+      )}
     </div>
   );
 
   const aiSection = (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, padding: isMobile ? '10px' : '12px 16px', boxSizing: 'border-box', textAlign: 'left' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '6px', marginBottom: '6px', gap: '8px' }}>
-        <h3 style={{ margin: 0, fontSize: '14px', color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          🤖 AI Assistant — {selectedPaper?.title}
-        </h3>
-        <button onClick={() => selectedPaper && runInitialSummary(selectedPaper)} disabled={loading} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '4px', padding: '2px 7px', fontSize: '11px', color: '#555', cursor: 'pointer', flexShrink: 0 }}>
-          ↻ Reset
-        </button>
+        <h3 style={{ margin: 0, fontSize: '14px', color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🤖 AI Assistant — {selectedPaper?.title}</h3>
+        <button onClick={() => selectedPaper && runInitialSummary(selectedPaper)} disabled={loading} style={{ background: 'none', border: '1px solid #ddd', borderRadius: '4px', padding: '2px 7px', fontSize: '11px', color: '#555', cursor: 'pointer', flexShrink: 0 }}>↻ Reset</button>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '4px 0' }}>
         {chat.map((msg, i) => (
           <div key={i} style={{ marginBottom: '10px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
             {msg.role === 'user' ? (
-              <div style={{ display: 'inline-block', padding: '9px 13px', borderRadius: '10px', backgroundColor: '#007bff', color: 'white', maxWidth: '90%', fontSize: isMobile ? '14px' : '13px', lineHeight: '1.45', whiteSpace: 'pre-wrap', textAlign: 'left', wordBreak: 'break-word' }}>
-                {msg.text}
-              </div>
+              <div style={{ display: 'inline-block', padding: '9px 13px', borderRadius: '10px', backgroundColor: '#007bff', color: 'white', maxWidth: '90%', fontSize: isMobile ? '14px' : '13px', lineHeight: '1.45', whiteSpace: 'pre-wrap', textAlign: 'left', wordBreak: 'break-word' }}>{msg.text}</div>
             ) : (
-              <div
-                style={{ display: 'inline-block', padding: '9px 13px', borderRadius: '10px', backgroundColor: '#f1f3f4', color: '#1f2328', maxWidth: '94%', fontSize: isMobile ? '14px' : '13px', lineHeight: '1.5', textAlign: 'left', wordBreak: 'break-word', letterSpacing: 'normal' }}
-                dangerouslySetInnerHTML={{ __html: renderMarkdownAndMathHtml(msg.text, { preserveColors: false }) }}
-              />
+              <div style={{ display: 'inline-block', padding: '9px 13px', borderRadius: '10px', backgroundColor: '#f1f3f4', color: '#1f2328', maxWidth: '94%', fontSize: isMobile ? '14px' : '13px', lineHeight: '1.5', textAlign: 'left', wordBreak: 'break-word', letterSpacing: 'normal' }} dangerouslySetInnerHTML={{ __html: renderMarkdownAndMathHtml(msg.text, { preserveColors: false }) }} />
             )}
           </div>
         ))}
@@ -1694,317 +1652,68 @@ ${extractedText}`;
         <div ref={chatEndRef} />
       </div>
       <div style={{ display: 'flex', marginTop: '8px', paddingBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px' }}>
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSendMessage()}
-          placeholder={`Ask Gemini (${aiLanguage})...`}
-          style={{ flex: 1, padding: '8px 10px', fontSize: isMobile ? '16px' : '13.5px', borderRadius: '4px 0 0 4px', border: '1px solid #ccc', color: '#333', backgroundColor: '#fff', minWidth: 0 }}
-        />
-        <button onClick={handleSendMessage} disabled={loading} style={{ padding: '8px 14px', fontSize: '13px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '0 4px 4px 0', cursor: 'pointer', flexShrink: 0 }}>
-          Send
-        </button>
+        <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSendMessage()} placeholder={`Ask Gemini (${aiLanguage})...`} style={{ flex: 1, padding: '8px 10px', fontSize: isMobile ? '16px' : '13.5px', borderRadius: '4px 0 0 4px', border: '1px solid #ccc', color: '#333', backgroundColor: '#fff', minWidth: 0 }} />
+        <button onClick={handleSendMessage} disabled={loading} style={{ padding: '8px 14px', fontSize: '13px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '0 4px 4px 0', cursor: 'pointer', flexShrink: 0 }}>Send</button>
       </div>
     </div>
   );
 
-  const mdMenuItemStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    padding: '7px 8px',
-    border: 'none',
-    backgroundColor: 'transparent',
-    color: '#1f2328',
-    fontSize: '12px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    borderBottom: '1px solid #f0f0f0',
-    boxSizing: 'border-box'
-  };
+  const mdMenuItemStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '7px 8px', border: 'none', backgroundColor: 'transparent', color: '#1f2328', fontSize: '12px', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid #f0f0f0', boxSizing: 'border-box' };
 
   const memoSection = (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, padding: isMobile ? '8px 10px' : '8px 12px', backgroundColor: '#fafafa', boxSizing: 'border-box', textAlign: 'left' }}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
         <span style={{ fontSize: '13px', marginRight: '1px' }}>📝</span>
         {MEMO_COLORS.map(c => (
-          <button
-            key={c.key}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => handleApplyMemoColor(c.code)}
-            title={`文字色：${c.label}`}
-            style={{
-              width: '15px',
-              height: '15px',
-              borderRadius: '50%',
-              backgroundColor: c.code,
-              border: activeMemoColor === c.code ? '2px solid #007bff' : '1px solid #bbb',
-              boxShadow: activeMemoColor === c.code ? '0 0 0 1px #fff inset' : 'none',
-              cursor: 'pointer',
-              padding: 0,
-              flexShrink: 0
-            }}
-          />
+          <button key={c.key} onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyMemoColor(c.code)} title={`文字色：${c.label}`} style={{ width: '15px', height: '15px', borderRadius: '50%', backgroundColor: c.code, border: activeMemoColor === c.code ? '2px solid #007bff' : '1px solid #bbb', boxShadow: activeMemoColor === c.code ? '0 0 0 1px #fff inset' : 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }} />
         ))}
-
         <span style={{ width: '1px', height: '13px', backgroundColor: '#ddd', margin: '0 2px' }} />
-
-        {/* コンパクトなiPhone風トグルスイッチ（編集 ⇔ 表示） */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isMemoPreview}
-          onClick={() => { setIsMdMenuOpen(false); setIsMemoPreview(p => !p); }}
-          title={isMemoPreview ? "表示モード（クリックで編集に戻る）" : "編集モード（クリックで数式・Markdownを表示）"}
-          style={{
-            position: 'relative',
-            width: '36px',
-            height: '20px',
-            borderRadius: '999px',
-            border: 'none',
-            backgroundColor: isMemoPreview ? '#34c759' : '#cbd5e1',
-            cursor: 'pointer',
-            padding: 0,
-            transition: 'background-color 0.2s ease',
-            flexShrink: 0
-          }}
-        >
-          <span
-            style={{
-              position: 'absolute',
-              top: '2px',
-              left: '2px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '9px',
-              lineHeight: 1,
-              transform: isMemoPreview ? 'translateX(16px)' : 'translateX(0)',
-              transition: 'transform 0.2s ease'
-            }}
-          >
+        <button type="button" role="switch" aria-checked={isMemoPreview} onClick={() => { setIsMdMenuOpen(false); setIsMemoPreview(p => !p); }} title={isMemoPreview ? "表示モード（クリックで編集に戻る）" : "編集モード（クリックで数式・Markdownを表示）"} style={{ position: 'relative', width: '36px', height: '20px', borderRadius: '999px', border: 'none', backgroundColor: isMemoPreview ? '#34c759' : '#cbd5e1', cursor: 'pointer', padding: 0, transition: 'background-color 0.2s ease', flexShrink: 0 }}>
+          <span style={{ position: 'absolute', top: '2px', left: '2px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', lineHeight: 1, transform: isMemoPreview ? 'translateX(16px)' : 'translateX(0)', transition: 'transform 0.2s ease' }}>
             {isMemoPreview ? "👁️" : "✏️"}
           </span>
         </button>
-
         <span style={{ width: '1px', height: '13px', backgroundColor: '#ddd', margin: '0 2px' }} />
-
-        {/* 文中数式（$...$） */}
-        <button
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => handleInsertDelim("$")}
-          title="文章と同じ行に変数・数式を挿入（$...$）"
-          style={{
-            height: '21px',
-            padding: '0 5px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'baseline',
-            gap: '2px',
-            lineHeight: 1
-          }}
-        >
-          <span style={{ fontSize: '9.5px', color: '#888', fontWeight: 'normal' }}>Aa</span>
-          <span style={{ fontSize: '11.5px', color: '#1a73e8', fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 'bold' }}>
-            x<sub style={{ fontSize: '7.5px', fontStyle: 'normal' }}>i</sub>
-          </span>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("$")} title="文章と同じ行に変数・数式を挿入（$...$）" style={{ height: '21px', padding: '0 5px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'baseline', gap: '2px', lineHeight: 1 }}>
+          <span style={{ fontSize: '9.5px', color: '#888' }}>Aa</span>
+          <span style={{ fontSize: '11.5px', color: '#1a73e8', fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 'bold' }}>x<sub style={{ fontSize: '7.5px', fontStyle: 'normal' }}>i</sub></span>
         </button>
-
-        {/* 独立数式（$$...$$） */}
-        <button
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => handleInsertDelim("$$")}
-          title="独立した行に大きな数式を挿入（$$...$$）"
-          style={{
-            height: '21px',
-            padding: '0 5px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '2px',
-            lineHeight: 1
-          }}
-        >
-          <span style={{ fontSize: '9.5px', color: '#999' }}>[</span>
-          <span style={{ fontSize: '11.5px', color: '#1f2328', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>∑</span>
-          <span style={{ fontSize: '9.5px', color: '#999' }}>]</span>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("$$")} title="独立した行に大きな数式を挿入（$$...$$）" style={{ height: '21px', padding: '0 5px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px', lineHeight: 1 }}>
+          <span style={{ fontSize: '9.5px', color: '#999' }}>[</span><span style={{ fontSize: '11.5px', color: '#1f2328', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>∑</span><span style={{ fontSize: '9.5px', color: '#999' }}>]</span>
         </button>
-
-        {/* 収納式 Markdown・装飾メニュー（Aa▾：右揃え2列グリッド） */}
         <div style={{ display: 'inline-flex', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setIsMdMenuOpen(prev => !prev)}
-            title="太字・見出し・箇条書きなどの書式メニュー"
-            style={{
-              height: '21px',
-              padding: '0 5px',
-              border: isMdMenuOpen ? '1px solid #007bff' : '1px solid #ccc',
-              borderRadius: '4px',
-              backgroundColor: isMdMenuOpen ? '#e8f0fe' : '#fff',
-              color: isMdMenuOpen ? '#1a73e8' : '#333',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '1px',
-              lineHeight: 1
-            }}
-          >
-            <span>Aa</span>
-            <span style={{ fontSize: '8px' }}>▾</span>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => setIsMdMenuOpen(prev => !prev)} title="太字・見出し・箇条書きなどの書式メニュー" style={{ height: '21px', padding: '0 5px', border: isMdMenuOpen ? '1px solid #007bff' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isMdMenuOpen ? '#e8f0fe' : '#fff', color: isMdMenuOpen ? '#1a73e8' : '#333', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '1px', lineHeight: 1 }}>
+            <span>Aa</span><span style={{ fontSize: '8px' }}>▾</span>
           </button>
-
           {isMdMenuOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '4px',
-                zIndex: 200,
-                width: '210px',
-                maxWidth: '100%',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                backgroundColor: '#fff',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.16)',
-                overflow: 'hidden'
-              }}
-            >
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("bold")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+B">
-                <span><strong>B</strong> 太字</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("italic")} style={mdMenuItemStyle} title="Ctrl+I">
-                <span><em>I</em> 斜体</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("underline")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+U">
-                <span><u>U</u> 下線</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("strikeThrough")} style={mdMenuItemStyle} title="~~打ち消し~~">
-                <span><del>S</del> 取消</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("## ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="## 見出し">
-                <span><strong>H</strong> 見出し</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("- ")} style={mdMenuItemStyle} title="- 箇条書き">
-                <span>・ 箇条書</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("> ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0', borderBottom: 'none' }} title="> 引用">
-                <span>❝ 引用</span>
-              </button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("`")} style={{ ...mdMenuItemStyle, borderBottom: 'none' }} title="`コード`">
-                <span><code>{"</>"}</code> コード</span>
-              </button>
+            <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '4px', zIndex: 200, width: '210px', maxWidth: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.16)', overflow: 'hidden' }}>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("bold")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+B"><span><strong>B</strong> 太字</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("italic")} style={mdMenuItemStyle} title="Ctrl+I"><span><em>I</em> 斜体</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("underline")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+U"><span><u>U</u> 下線</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("strikeThrough")} style={mdMenuItemStyle} title="Alt+Shift+5"><span><del>S</del> 取消</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("## ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="## 見出し"><span><strong>H</strong> 見出し</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("- ")} style={mdMenuItemStyle} title="Ctrl+Shift+8"><span>・ 箇条書</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("> ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0', borderBottom: 'none' }} title="> 引用"><span>❝ 引用</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("`")} style={{ ...mdMenuItemStyle, borderBottom: 'none' }} title="`コード`"><span><code>{"</>"}</code> コード</span></button>
             </div>
           )}
         </div>
-
-        {/* Saveボタン（他のボタンと同じ扱い・同じ高さ） */}
-        <button
-          onClick={() => selectedPaper && handleSaveMemo(selectedPaper.id, memoText)}
-          style={{
-            height: '21px',
-            padding: '0 7px',
-            fontSize: '11px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            lineHeight: 1,
-            boxSizing: 'border-box'
-          }}
-        >
-          Save
-        </button>
-        {memoStatus && (
-          <span style={{ fontSize: '11px', color: memoStatus === '✓' ? '#28a745' : '#888', lineHeight: 1 }}>
-            {memoStatus}
-          </span>
-        )}
+        <button onClick={() => selectedPaper && handleSaveMemo(selectedPaper.id, memoText)} style={{ height: '21px', padding: '0 7px', fontSize: '11px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxSizing: 'border-box' }}>Save</button>
+        {memoStatus && <span style={{ fontSize: '11px', color: memoStatus === '✓' ? '#28a745' : '#888', lineHeight: 1 }}>{memoStatus}</span>}
       </div>
 
       {isMemoPreview ? (
-        <div
-          onClick={() => setIsMemoPreview(false)}
-          title="クリックして編集に戻る"
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            padding: '8px 10px',
-            fontSize: isMobile ? '14.5px' : '13px',
-            lineHeight: '1.4',
-            letterSpacing: '0',
-            textAlign: 'left',
-            border: '1px solid #007bff',
-            borderRadius: '6px',
-            backgroundColor: '#fff',
-            color: '#1f2328',
-            wordBreak: 'break-word',
-            boxSizing: 'border-box',
-            marginBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px',
-            cursor: 'text'
-          }}
-          dangerouslySetInnerHTML={{
-            __html: memoText
-              ? renderMarkdownAndMathHtml(memoText, { preserveColors: true })
-              : '<span style="color:#999;font-size:12px;">（メモはまだありません）</span>'
-          }}
-        />
+        <div onClick={() => setIsMemoPreview(false)} title="クリックして編集に戻る" style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 10px', fontSize: isMobile ? '14.5px' : '13px', lineHeight: '1.4', letterSpacing: '0', textAlign: 'left', border: '1px solid #007bff', borderRadius: '6px', backgroundColor: '#fff', color: '#1f2328', wordBreak: 'break-word', boxSizing: 'border-box', marginBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px', cursor: 'text' }} dangerouslySetInnerHTML={{ __html: memoText ? renderMarkdownAndMathHtml(memoText, { preserveColors: true }) : '<span style="color:#999;font-size:12px;">（メモはまだありません）</span>' }} />
       ) : (
         <div
           ref={memoEditorRef}
           contentEditable
           suppressContentEditableWarning
-          onInput={(e) => setMemoText(e.currentTarget.innerHTML)}
-          onPaste={(e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
-          }}
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            padding: '8px 10px',
-            fontSize: isMobile ? '16px' : '13px',
-            lineHeight: '1.4',
-            letterSpacing: '0',
-            textAlign: 'left',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            backgroundColor: '#fff',
-            color: '#1f2328',
-            wordBreak: 'break-word',
-            boxSizing: 'border-box',
-            outline: 'none',
-            marginBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px'
-          }}
+          onFocus={(e) => { if (memoHistoryRef.current.stack.length === 0) pushMemoHistory(e.currentTarget.innerHTML); }}
+          onKeyDown={handleMemoKeyDown}
+          onInput={(e) => { const html = e.currentTarget.innerHTML; pushMemoHistory(html); setMemoText(html); }}
+          onPaste={(e) => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); }}
+          style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 10px', fontSize: isMobile ? '16px' : '13px', lineHeight: '1.4', letterSpacing: '0', textAlign: 'left', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: '#fff', color: '#1f2328', wordBreak: 'break-word', boxSizing: 'border-box', outline: 'none', marginBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px' }}
         />
       )}
     </div>
@@ -2020,29 +1729,30 @@ ${extractedText}`;
       onMouseLeave={handlePointerUp}
       onTouchMove={(e) => { if ((isDraggingSidebar || isDragging || isDraggingVertical) && e.touches.length > 0) handlePointerMove(e.touches[0].clientX, e.touches[0].clientY); }}
       onTouchEnd={handlePointerUp}
+      onDragOver={(e) => { if (!draggedItem && e.dataTransfer?.types?.includes("Files")) { e.preventDefault(); if (!isFileDragging) setIsFileDragging(true); } }}
+      onDragLeave={(e) => { if (e.currentTarget === e.target) setIsFileDragging(false); }}
+      onDrop={(e) => { if (!draggedItem && e.dataTransfer?.files?.length > 0) { e.preventDefault(); setIsFileDragging(false); handleDropPdfFile(e.dataTransfer.files[0]); } }}
       style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#333', backgroundColor: '#fff', textAlign: 'left', userSelect: isAnyDragging ? 'none' : 'auto', cursor: isDraggingSidebar || isDragging ? 'col-resize' : isDraggingVertical ? 'row-resize' : 'auto', overflow: 'hidden' }}
     >
       <style>{`.katex-display { margin: 2px 0 !important; text-align: left !important; } .katex { font-size: 1.05em; }`}</style>
 
+      {isFileDragging && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(26, 115, 232, 0.14)', border: '4px dashed #1a73e8', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <div style={{ backgroundColor: '#fff', padding: '18px 28px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', fontSize: '16px', fontWeight: 'bold', color: '#1a73e8' }}>📄 PDFをドロップして新規登録</div>
+        </div>
+      )}
+
       {isMobile && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #ddd', flexShrink: 0, gap: '8px' }}>
-          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 10px', fontSize: '15px', cursor: 'pointer', color: '#333', flexShrink: 0 }}>
-            ☰ 論文一覧
-          </button>
-          <div style={{ flex: 1, fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', color: '#333' }}>
-            {selectedPaper ? selectedPaper.title : "📚 Paper Manager"}
-          </div>
-          <span onClick={handleToggleMode} style={{ fontSize: '10px', padding: '3px 7px', borderRadius: '10px', backgroundColor: isPersonalMode ? '#e6f4ea' : '#e8f0fe', color: isPersonalMode ? '#137333' : '#1a73e8', fontWeight: 'bold', flexShrink: 0 }}>
-            {isPersonalMode ? "🔓" : "Demo"}
-          </span>
+          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 10px', fontSize: '15px', cursor: 'pointer', color: '#333', flexShrink: 0 }}>☰ 論文一覧</button>
+          <div style={{ flex: 1, fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', color: '#333' }}>{selectedPaper ? selectedPaper.title : "📚 Paper Manager"}</div>
+          <span onClick={handleToggleMode} style={{ fontSize: '10px', padding: '3px 7px', borderRadius: '10px', backgroundColor: isPersonalMode ? '#e6f4ea' : '#e8f0fe', color: isPersonalMode ? '#137333' : '#1a73e8', fontWeight: 'bold', flexShrink: 0 }}>{isPersonalMode ? "🔓" : "Demo"}</span>
         </div>
       )}
 
       {isMobile && isMobileMenuOpen && (
         <div onClick={() => setIsMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 999, display: 'flex' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: '82%', maxWidth: '320px', height: '100%', backgroundColor: '#f8f9fa', padding: '16px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', boxShadow: '2px 0 12px rgba(0,0,0,0.2)' }}>
-            {sidebarContent}
-          </div>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '82%', maxWidth: '320px', height: '100%', backgroundColor: '#f8f9fa', padding: '16px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', boxShadow: '2px 0 12px rgba(0,0,0,0.2)' }}>{sidebarContent}</div>
         </div>
       )}
 
@@ -2053,9 +1763,7 @@ ${extractedText}`;
       )}
 
       {!isMobile && (
-        <div style={{ width: `${sidebarWidth}px`, padding: isSidebarOpen ? '15px' : '0px', backgroundColor: '#f8f9fa', display: 'flex', flexDirection: 'column', flexShrink: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
-          {sidebarContent}
-        </div>
+        <div style={{ width: `${sidebarWidth}px`, padding: isSidebarOpen ? '15px' : '0px', backgroundColor: '#f8f9fa', display: 'flex', flexDirection: 'column', flexShrink: 0, overflow: 'hidden', boxSizing: 'border-box' }}>{sidebarContent}</div>
       )}
 
       {!isMobile && isSidebarOpen && (
@@ -2072,7 +1780,7 @@ ${extractedText}`;
             </div>
             <div style={{ margin: '20px 0', padding: '20px', backgroundColor: '#f0f7ff', borderRadius: '8px', border: '1px dashed #007bff' }}>
               <h3 style={{ marginTop: 0, fontSize: '16px', color: '#007bff' }}>📄 Auto-extract & Link PDF</h3>
-              <p style={{ fontSize: '14px', color: '#555' }}>Select a PDF file. It will be linked to this paper so it opens automatically next time.</p>
+              <p style={{ fontSize: '14px', color: '#555' }}>Select or drop a PDF file. It will be linked to this paper so it opens automatically next time.</p>
               <input type="file" accept="application/pdf" onChange={handlePdfUpload} disabled={loading} style={{ maxWidth: '100%' }} />
               {pendingPdfFile && <p style={{ color: '#28a745', fontSize: '13px', fontWeight: 'bold', marginTop: '8px' }}>✅ PDF linked: {pendingPdfFile.name}</p>}
               {loading && <p style={{ color: '#d9534f', fontWeight: 'bold', marginTop: '10px' }}>⏳ {loadingMessage}</p>}
@@ -2082,9 +1790,7 @@ ${extractedText}`;
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Extracted Abstract</label>
             <textarea value={newAbstract} onChange={(e) => setNewAbstract(e.target.value)} style={{ width: '100%', height: '200px', padding: '10px', fontSize: isMobile ? '16px' : '14px', marginBottom: '20px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: '10px', paddingBottom: '24px' }}>
-              <button onClick={handleAddPaper} disabled={loading} style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-                {isPersonalMode ? "Save to Database" : "Add (Demo Mode)"}
-              </button>
+              <button onClick={handleAddPaper} disabled={loading} style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>{isPersonalMode ? "Save to Database" : "Add (Demo Mode)"}</button>
               <button onClick={() => { setIsAdding(false); setLoading(false); setLoadingMessage(""); }} style={{ padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
             </div>
           </div>
@@ -2093,9 +1799,7 @@ ${extractedText}`;
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <div style={{ display: 'flex', borderBottom: '1px solid #ddd', backgroundColor: '#f8f9fa', flexShrink: 0 }}>
                 {[{ id: "pdf", label: "📄 PDF" }, { id: "ai", label: "🤖 AI" }, { id: "memo", label: "📝 Memo" }].map(tab => (
-                  <button key={tab.id} onClick={() => setMobileTab(tab.id)} style={{ flex: 1, padding: '10px 6px', border: 'none', borderBottom: mobileTab === tab.id ? '3px solid #007bff' : '3px solid transparent', backgroundColor: mobileTab === tab.id ? '#fff' : 'transparent', color: mobileTab === tab.id ? '#007bff' : '#555', fontWeight: mobileTab === tab.id ? 'bold' : 'normal', fontSize: '14px', cursor: 'pointer' }}>
-                    {tab.label}
-                  </button>
+                  <button key={tab.id} onClick={() => setMobileTab(tab.id)} style={{ flex: 1, padding: '10px 6px', border: 'none', borderBottom: mobileTab === tab.id ? '3px solid #007bff' : '3px solid transparent', backgroundColor: mobileTab === tab.id ? '#fff' : 'transparent', color: mobileTab === tab.id ? '#007bff' : '#555', fontWeight: mobileTab === tab.id ? 'bold' : 'normal', fontSize: '14px', cursor: 'pointer' }}>{tab.label}</button>
                 ))}
               </div>
               <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -2106,24 +1810,18 @@ ${extractedText}`;
             </div>
           ) : (
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minWidth: 0 }}>
-              <div style={{ width: isRightCollapsed ? 'calc(100% - 6px)' : `${leftWidth}%`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-                {pdfSection}
-              </div>
+              <div style={{ width: isRightCollapsed ? 'calc(100% - 6px)' : `${leftWidth}%`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>{pdfSection}</div>
               <div onMouseDown={() => setIsDragging(true)} onTouchStart={() => setIsDragging(true)} onDoubleClick={() => setLeftWidth(prev => (prev >= 100 ? 50 : 100))} style={{ width: '6px', flexShrink: 0, cursor: 'col-resize', backgroundColor: isDragging ? '#007bff' : '#ddd', zIndex: 10, touchAction: 'none' }} />
               <div ref={rightPaneRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#fff', minWidth: 0, overflow: 'hidden' }}>
-                <div style={{ height: aiHeightPercent >= 100 ? 'calc(100% - 6px)' : `${aiHeightPercent}%`, flexShrink: 0, minHeight: 0, overflow: 'hidden', display: isRightCollapsed || aiHeightPercent <= 0 ? 'none' : 'block' }}>
-                  {aiSection}
-                </div>
+                <div style={{ height: aiHeightPercent >= 100 ? 'calc(100% - 6px)' : `${aiHeightPercent}%`, flexShrink: 0, minHeight: 0, overflow: 'hidden', display: isRightCollapsed || aiHeightPercent <= 0 ? 'none' : 'block' }}>{aiSection}</div>
                 <div onMouseDown={() => setIsDraggingVertical(true)} onTouchStart={() => setIsDraggingVertical(true)} onDoubleClick={() => setAiHeightPercent(prev => (prev <= 0 ? 50 : 0))} style={{ height: '6px', flexShrink: 0, cursor: 'row-resize', backgroundColor: isDraggingVertical ? '#007bff' : '#ddd', zIndex: 10, touchAction: 'none' }} />
-                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: isRightCollapsed || aiHeightPercent >= 100 ? 'none' : 'block' }}>
-                  {memoSection}
-                </div>
+                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: isRightCollapsed || aiHeightPercent >= 100 ? 'none' : 'block' }}>{memoSection}</div>
               </div>
             </div>
           )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', gap: '10px', padding: '20px', textAlign: 'center' }}>
-            <h3>{isMobile ? "👆 左上の「☰ 論文一覧」から論文を選択してください" : "👈 Please select a paper from the left menu"}</h3>
+            <h3>{isMobile ? "👆 左上の「☰ 論文一覧」から論文を選択してください" : "👈 Please select a paper from the left menu (or drop a PDF here)"}</h3>
             {!isPersonalMode && <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Currently in Demo Mode — Select a sample paper to test AI summary, PDF viewer, and Notes.</p>}
           </div>
         )}
