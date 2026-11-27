@@ -90,8 +90,6 @@ const decodeEntities = (str = "") =>
     .replace(new RegExp("&" + "#39;", "g"), "'")
     .replace(new RegExp("&" + "nbsp;", "g"), " ");
 
-const decodeEntities = (str = "") =>
-  str.replace(/</g, "<").replace(/>/g, ">").replace(/&/g, "&").replace(/"/g, '"').replace(/'/g, "'").replace(/ /g, " ");
 
 const normalizeTeX = (expr = "") =>
   expr.replace(/@@STY\d+@@/g, "").replace(/＿/g, "_").replace(/＾/g, "^").replace(/｛/g, "{").replace(/｝/g, "}").replace(/＝/g, "=").replace(/＋/g, "+").replace(/－/g, "-").trim();
