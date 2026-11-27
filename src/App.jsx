@@ -16,35 +16,35 @@ const DEMO_PAPERS = [
     title: "Minimum Wages and Employment: A Case Study of the Fast-Food Industry (Card & Krueger, 1994)",
     folder: "Labor Economics/Minimum Wage",
     abstract: "Research Question: Does an increase in the minimum wage reduce employment in low-wage industries?\nData Used: Survey data from 410 fast-food restaurants in New Jersey and eastern Pennsylvania before and after NJ's 1992 minimum wage increase.\nMethodology: Difference-in-Differences (DID).\nConclusion: Found no indication that the rise in the minimum wage reduced employment.",
-    memo: "<span style=\"color:#1a73e8\">## 識別戦略メモ</span><br>- $\\Delta E_i$：店舗 $i$ の雇用変化<br>- $\\text{NJ}_i$：ニュージャージー州ダミー（処置群）<br>$$\\Delta E_i = \\alpha + \\beta \\cdot \\text{NJ}_i + \\varepsilon_i$$"
+    memo: "<span style=\"color:#1a73e8\">## Identification Strategy Notes</span><br>- $\\Delta E_i$: Change in employment at store $i$<br>- $\\text{NJ}_i$: New Jersey dummy (treatment group)<br>$$\\Delta E_i = \\alpha + \\beta \\cdot \\text{NJ}_i + \\varepsilon_i$$"
   },
   {
     id: "demo-2",
     title: "Children and Gender Inequality: Evidence from Denmark (Kleven et al., 2019)",
     folder: "Labor Economics/Gender",
     abstract: "Research Question: How much of the remaining gender inequality in earnings can be explained by the arrival of children?\nData Used: Danish administrative data covering the full population from 1980 to 2013.\nMethodology: Event Study around the birth of the first child.\nConclusion: The arrival of children creates a long-run gender gap in earnings of about 20%, driven by labor force participation, hours worked, and wage rates.",
-    memo: "## チャイルド・ペナルティ整理\n- 第一子出産をイベントとしたイベントスタディ。\n- 出産前は男女で平行トレンドだが、出産直後に女性のみ所得が急落し回復しない。"
+    memo: "## Child Penalty Notes\n- Event study centered on the birth of the first child.\n- Parallel trends hold before childbirth, but women's earnings drop sharply right after birth and never fully recover."
   },
   {
     id: "demo-3",
     title: "The Colonial Origins of Comparative Development (Acemoglu, Johnson, & Robinson, 2001)",
     folder: "Development & Institutions",
     abstract: "Research Question: What is the fundamental cause of large differences in income per capita across countries?\nData Used: Cross-country data on settler mortality, institutional quality (expropriation risk), and GDP per capita.\nMethodology: Instrumental Variables (2SLS) using European settler mortality as an instrument for current institutions.\nConclusion: Differences in institutions account for roughly three-quarters of the income per capita differences across former colonies.",
-    memo: "## 操作変数（IV）の妥当性\n- **除外制約**：過去の入植者死亡率は「当時の制度形成」を通じてのみ現代の所得に影響する。"
+    memo: "## IV Validity\n- **Exclusion Restriction**: Historical settler mortality affects current income only through its impact on early institutional development."
   }
 ];
 
 const HIGHLIGHT_COLORS = [
-  { name: "黄", code: "#fff3a3" },
-  { name: "緑", code: "#c8f7c5" },
-  { name: "ピンク", code: "#ffd1dc" }
+  { name: "Yellow", code: "#fff3a3" },
+  { name: "Green", code: "#c8f7c5" },
+  { name: "Pink", code: "#ffd1dc" }
 ];
 
 const MEMO_COLORS = [
-  { key: "black", label: "黒", code: "#1f2328" },
-  { key: "orange", label: "オレンジ", code: "#e67e22" },
-  { key: "blue", label: "青", code: "#1a73e8" },
-  { key: "green", label: "緑", code: "#1e8e3e" }
+  { key: "black", label: "Black", code: "#1f2328" },
+  { key: "orange", label: "Orange", code: "#e67e22" },
+  { key: "blue", label: "Blue", code: "#1a73e8" },
+  { key: "green", label: "Green", code: "#1e8e3e" }
 ];
 
 const MEMO_COLOR_MAP = { black: "#1f2328", orange: "#e67e22", blue: "#1a73e8", green: "#1e8e3e" };
@@ -89,7 +89,6 @@ const decodeEntities = (str = "") =>
     .replace(new RegExp("&" + "quot;", "g"), '"')
     .replace(new RegExp("&" + "#39;", "g"), "'")
     .replace(new RegExp("&" + "nbsp;", "g"), " ");
-
 
 const normalizeTeX = (expr = "") =>
   expr.replace(/@@STY\d+@@/g, "").replace(/＿/g, "_").replace(/＾/g, "^").replace(/｛/g, "{").replace(/｝/g, "}").replace(/＝/g, "=").replace(/＋/g, "+").replace(/－/g, "-").trim();
@@ -309,7 +308,7 @@ const buildReadingModeHtml = (title, pages, initialTheme = "light", initialFontS
     return `<section class="page-block"><div class="page-label">Page ${p.pageNum}</div>${parasHtml}</section>`;
   }).join("\n");
 
-  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" /><title>📖 ${safeTitle}</title><style>:root{--bg:#fff;--text:#1f2328;--sub:#656d76;--bar:rgba(248,249,250,.94);--bd:#e1e4e8;--btn:#fff}body[data-theme="sepia"]{--bg:#f6efe2;--text:#3b2f23;--sub:#7a6855;--bar:rgba(239,229,211,.95);--bd:#dfd1b8;--btn:#fbf6ec}body[data-theme="dark"]{--bg:#16181c;--text:#e6e8eb;--sub:#9aa0a6;--bar:rgba(28,31,38,.95);--bd:#2f343d;--btn:#242830}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;transition:background .2s,color .2s;text-align:left}.toolbar{position:sticky;top:0;z-index:100;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--bar);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.toolbar-title{font-size:13px;font-weight:700;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}button{background:var(--btn);color:var(--text);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}main{max-width:740px;margin:0 auto;padding:28px 20px 80px;font-size:${initialFontSize}px;line-height:1.85}h1{font-size:1.55em;line-height:1.35;margin:0 0 28px;padding-bottom:16px;border-bottom:1px solid var(--bd)}.page-block{margin-bottom:32px}.page-label{font-family:sans-serif;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 12px;padding-bottom:4px;border-bottom:1px dashed var(--bd)}p{margin:0 0 1.05em;word-break:break-word}</style></head><body data-theme="${initialTheme}"><header class="toolbar"><div class="toolbar-title">📖 ${safeTitle}</div><div class="controls"><button onclick="changeSize(-2)">A-</button><button onclick="changeSize(2)">A+</button><button onclick="setTheme('light')">☀️</button><button onclick="setTheme('sepia')">📜</button><button onclick="setTheme('dark')">🌙</button></div></header><main id="article"><h1>${safeTitle}</h1>${bodyHtml}</main><script>let s=${initialFontSize};function changeSize(d){s=Math.min(28,Math.max(13,s+d));document.getElementById('article').style.fontSize=s+'px'}function setTheme(t){document.body.setAttribute('data-theme',t)}</script></body></html>`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" /><title>📖 ${safeTitle}</title><style>:root{--bg:#fff;--text:#1f2328;--sub:#656d76;--bar:rgba(248,249,250,.94);--bd:#e1e4e8;--btn:#fff}body[data-theme="sepia"]{--bg:#f6efe2;--text:#3b2f23;--sub:#7a6855;--bar:rgba(239,229,211,.95);--bd:#dfd1b8;--btn:#fbf6ec}body[data-theme="dark"]{--bg:#16181c;--text:#e6e8eb;--sub:#9aa0a6;--bar:rgba(28,31,38,.95);--bd:#2f343d;--btn:#242830}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;transition:background .2s,color .2s;text-align:left}.toolbar{position:sticky;top:0;z-index:100;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--bar);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.toolbar-title{font-size:13px;font-weight:700;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}button{background:var(--btn);color:var(--text);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}main{max-width:740px;margin:0 auto;padding:28px 20px 80px;font-size:${initialFontSize}px;line-height:1.85}h1{font-size:1.55em;line-height:1.35;margin:0 0 28px;padding-bottom:16px;border-bottom:1px solid var(--bd)}.page-block{margin-bottom:32px}.page-label{font-family:sans-serif;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 12px;padding-bottom:4px;border-bottom:1px dashed var(--bd)}p{margin:0 0 1.05em;word-break:break-word}</style></head><body data-theme="${initialTheme}"><header class="toolbar"><div class="toolbar-title">📖 ${safeTitle}</div><div class="controls"><button onclick="changeSize(-2)">A-</button><button onclick="changeSize(2)">A+</button><button onclick="setTheme('light')">☀️</button><button onclick="setTheme('sepia')">📜</button><button onclick="setTheme('dark')">🌙</button></div></header><main id="article"><h1>${safeTitle}</h1>${bodyHtml}</main><script>let s=${initialFontSize};function changeSize(d){s=Math.min(28,Math.max(13,s+d));document.getElementById('article').style.fontSize=s+'px'}function setTheme(t){document.body.setAttribute('data-theme',t)}</script></body></html>`;
 };
 
 const openPdfDB = () => new Promise((resolve, reject) => {
@@ -405,7 +404,7 @@ function PdfCanvasViewer({ pdfUrl }) {
           await page.render({ canvasContext: ctx, viewport }).promise;
         }
       } catch (err) {
-        if (!cancelled) setErrorMsg("PDFの描画に失敗しました。");
+        if (!cancelled) setErrorMsg("Failed to render PDF.");
       } finally {
         if (!cancelled) setRendering(false);
       }
@@ -721,7 +720,7 @@ function App() {
       if (pEl) target = { pageNum: Number(pEl.dataset.page), paraIdx: Number(pEl.dataset.para), text: sel.toString().trim() };
     }
     if (!target) target = lastSelectionRef.current;
-    if (!target || !target.text) { alert("先にリーディングモード内の文章をなぞって選択してください。"); return; }
+    if (!target || !target.text) { alert("Please select some text in Reading Mode first."); return; }
     const nextHighlights = [...highlights, { id: `hl-${Date.now()}`, ...target, color: colorCode }];
     lastSelectionRef.current = null;
     if (sel) sel.removeAllRanges();
@@ -729,14 +728,14 @@ function App() {
   };
 
   const handleRemoveHighlight = async (hlId) => {
-    if (!selectedPaper || !window.confirm("このマーカーを削除しますか？")) return;
+    if (!selectedPaper || !window.confirm("Delete this highlight?")) return;
     await syncHighlights(selectedPaper.id, highlights.filter(h => h.id !== hlId));
   };
 
   const handleTranslateSelection = async () => {
     const sel = window.getSelection();
     const text = (sel && !sel.isCollapsed ? sel.toString().trim() : "") || lastSelectionRef.current?.text || "";
-    if (!text) { alert("先にリーディングモード内の文章をなぞって選択してください。"); return; }
+    if (!text) { alert("Please select some text in Reading Mode first."); return; }
     lastSelectionRef.current = null;
     if (sel) sel.removeAllRanges();
     setTranslationBox({ source: text, translated: "", loading: true });
@@ -745,7 +744,7 @@ function App() {
       const translated = await generateWithFallback(prompt);
       setTranslationBox({ source: text, translated: translated.trim(), loading: false });
     } catch {
-      setTranslationBox({ source: text, translated: "翻訳に失敗しました。少し時間をおいて再度お試しください。", loading: false });
+      setTranslationBox({ source: text, translated: "Translation failed. Please try again later.", loading: false });
     }
   };
 
@@ -753,8 +752,8 @@ function App() {
     if (!selectedPaper || !translationBox || translationBox.loading) return;
     const nextChat = [
       ...chat,
-      { role: 'user', text: `【翻訳した箇所】\n> ${translationBox.source}` },
-      { role: 'ai', text: `**翻訳 (${aiLanguage})**\n${translationBox.translated}\n\nこの部分について気になる表現や内容があれば聞いてください！` }
+      { role: 'user', text: `[Translated Excerpt]\n> ${translationBox.source}` },
+      { role: 'ai', text: `**Translation (${aiLanguage})**\n${translationBox.translated}\n\nFeel free to ask any questions about the wording or meaning of this passage!` }
     ];
     await updateChatForPaper(selectedPaper.id, nextChat);
     setTranslationBox(null);
@@ -767,14 +766,14 @@ function App() {
 
   const handleToggleSpeech = () => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("このブラウザは音声読み上げに対応していません。");
+      alert("Text-to-speech is not supported in this browser.");
       return;
     }
     if (isSpeaking) { window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
     const sel = window.getSelection();
     const selectedText = sel && !sel.isCollapsed ? sel.toString().trim() : "";
     const chunks = selectedText ? [selectedText] : (readingPages || []).flatMap((p) => p.paragraphs).filter(Boolean);
-    if (chunks.length === 0) { alert("読み上げる文章がありません。"); return; }
+    if (chunks.length === 0) { alert("No text available to read aloud."); return; }
     window.speechSynthesis.cancel();
     setIsSpeaking(true);
     chunks.forEach((chunk, idx) => {
@@ -794,10 +793,10 @@ function App() {
     setReadingLoading(true);
     setReadingProgress("Extracting text from PDF...");
     try {
-      const pages = await extractReadingPagesFromPdf(currentPdfUrl, (cur, total) => setReadingProgress(`Converting pages (${cur} / ${total})...`)
+      const pages = await extractReadingPagesFromPdf(currentPdfUrl, (cur, total) => setReadingProgress(`Converting pages (${cur} / ${total})...`));
       setReadingPages(pages);
     } catch (err) {
-      alert("リーディングモードへの変換に失敗しました: " + err.message);
+      alert("Failed to convert to Reading Mode: " + err.message);
       setIsReadingMode(false);
     } finally {
       setReadingLoading(false);
@@ -808,9 +807,9 @@ function App() {
   const handleOpenReadingNewTab = async () => {
     const title = selectedPaper?.title || "Reading Mode";
     const newWin = window.open("", "_blank");
-    if (!newWin) { alert("ポップアップがブロックされました。"); return; }
+    if (!newWin) { alert("Pop-up was blocked. Please allow pop-ups in your browser settings."); return; }
     newWin.document.open();
-    newWin.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>読み込み中...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ Preparing Reading Mode...</div></body></html>`);
+    newWin.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Loading...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><div>⏳ Preparing Reading Mode...</div></body></html>`);
     newWin.document.close();
     try {
       let pagesToShow = readingPages;
@@ -821,11 +820,11 @@ function App() {
         const plainMemo = memoText.replace(/<[^>]+>/g, " ").trim();
         pagesToShow = [{ pageNum: 1, paragraphs: [...(selectedPaper.abstract || "").split("\n").filter(Boolean), ...(plainMemo ? ["--- Notes ---", plainMemo] : [])] }];
       }
-      if (!pagesToShow || pagesToShow.length === 0) { newWin.close(); alert("表示できるPDFまたはテキストがありません。"); return; }
+      if (!pagesToShow || pagesToShow.length === 0) { newWin.close(); alert("No PDF or text available to display."); return; }
       newWin.document.open();
       newWin.document.write(buildReadingModeHtml(title, pagesToShow, readingTheme, readingFontSize, highlights));
       newWin.document.close();
-    } catch (err) { newWin.close(); alert("別タブ生成に失敗しました: " + err.message); }
+    } catch (err) { newWin.close(); alert("Failed to open Reading Mode in a new tab: " + err.message); }
   };
 
   const updateChatForPaper = async (paperId, newChatArray) => {
@@ -842,18 +841,18 @@ function App() {
 
   const handleToggleMode = () => {
     if (isPersonalMode) {
-      if (window.confirm("デモモード（面接官・閲覧者向け表示）に戻しますか？")) {
+      if (window.confirm("Switch back to Demo Mode?")) {
         localStorage.removeItem("paperManagerUnlocked");
         hasRestoredForMode.current = null;
         setIsPersonalMode(false); setSelectedPaper(null); setIsAdding(false);
       }
     } else {
-      const input = window.prompt("自分専用モードの合言葉を入力してください：");
+      const input = window.prompt("Enter the passcode for Personal Mode:");
       if (input === SECRET_PASSCODE) {
         localStorage.setItem("paperManagerUnlocked", "true");
         hasRestoredForMode.current = null;
         setIsPersonalMode(true); setSelectedPaper(null); setIsAdding(false);
-      } else if (input !== null) alert("合言葉が違います。");
+      } else if (input !== null) alert("Incorrect passcode.");
     }
   };
 
@@ -984,7 +983,7 @@ function App() {
         try {
           await updateDoc(doc(db, "papers", draggedItem.id), { folder: targetFolder });
           await fetchPapers();
-        } catch (e) { alert("移動に失敗しました: " + e.message); }
+        } catch (e) { alert("Failed to move paper: " + e.message); }
       }
     }
     setDraggedItem(null);
@@ -1006,7 +1005,7 @@ function App() {
         await updateDoc(doc(db, "papers", draggedItem.id), { folder: dest });
         setExpandedFolders(prev => ({ ...prev, [dest]: true }));
         await fetchPapers();
-      } catch (e) { alert("移動に失敗しました: " + e.message); }
+      } catch (e) { alert("Failed to move paper: " + e.message); }
       setDraggedItem(null);
       return;
     }
@@ -1052,13 +1051,13 @@ function App() {
         }
         updateFolderState();
         await fetchPapers();
-      } catch (e) { alert("フォルダの移動に失敗しました: " + e.message); }
+      } catch (e) { alert("Failed to move folder: " + e.message); }
       setLoading(false);
     }
   };
 
   const handleCreateRootFolder = () => {
-    const name = window.prompt("新しいフォルダ（タブ）の名前を入力してください：\n（例: Labor Economics）");
+    const name = window.prompt("Enter a new folder name:\n(e.g., Labor Economics)");
     if (!name || !name.trim()) return;
     const clean = name.trim().replace(/\//g, '-');
     setCustomFolders(prev => Array.from(new Set([...prev, clean])));
@@ -1067,7 +1066,7 @@ function App() {
   };
 
   const handleCreateSubFolder = (parentPath) => {
-    const sub = window.prompt(`「${parentPath}」の中に作るサブフォルダ名を入力してください：`);
+    const sub = window.prompt(`Enter a sub-folder name inside "${parentPath}":`);
     if (!sub || !sub.trim()) return;
     const full = `${parentPath}/${sub.trim().replace(/\//g, '-')}`;
     setCustomFolders(prev => Array.from(new Set([...prev, full])));
@@ -1078,7 +1077,7 @@ function App() {
   const handleRenameFolder = async (oldPath) => {
     const parts = oldPath.split('/');
     const oldLeaf = parts[parts.length - 1];
-    const newLeaf = window.prompt("新しいフォルダ名を入力してください：", oldLeaf);
+    const newLeaf = window.prompt("Enter a new folder name:", oldLeaf);
     if (!newLeaf || !newLeaf.trim() || newLeaf.trim() === oldLeaf) return;
     parts[parts.length - 1] = newLeaf.trim().replace(/\//g, '-');
     const newPath = parts.join('/');
@@ -1095,12 +1094,12 @@ function App() {
       for (const p of targets) await updateDoc(doc(db, "papers", p.id), { folder: p.folder === oldPath ? newPath : newPath + p.folder.slice(oldPath.length) });
       setCustomFolders(prev => prev.map(f => (f === oldPath ? newPath : f.startsWith(oldPath + '/') ? newPath + f.slice(oldPath.length) : f)));
       await fetchPapers();
-    } catch (e) { alert("名前の変更に失敗しました: " + e.message); }
+    } catch (e) { alert("Failed to rename folder: " + e.message); }
     setLoading(false);
   };
 
   const handleDeleteFolder = async (targetPath) => {
-    if (!window.confirm(`フォルダ「${targetPath}」を削除しますか？\n（※中の論文は消えず「Uncategorized」に移動します）`)) return;
+    if (!window.confirm(`Delete folder "${targetPath}"?\n(Papers inside will be moved to "Uncategorized".)`)) return;
     if (!isPersonalMode) {
       setPapers(prev => prev.map(p => (p.folder === targetPath || (p.folder || "").startsWith(targetPath + '/') ? { ...p, folder: "Uncategorized" } : p)));
       setCustomFolders(prev => prev.filter(f => f !== targetPath && !f.startsWith(targetPath + '/')));
@@ -1113,12 +1112,12 @@ function App() {
       for (const p of targets) await updateDoc(doc(db, "papers", p.id), { folder: "Uncategorized" });
       setCustomFolders(prev => prev.filter(f => f !== targetPath && !f.startsWith(targetPath + '/')));
       await fetchPapers();
-    } catch (e) { alert("削除に失敗しました: " + e.message); }
+    } catch (e) { alert("Failed to delete folder: " + e.message); }
     setLoading(false);
   };
 
   const handleRenamePaper = async (paper) => {
-    const t = window.prompt("新しい論文タイトルを入力してください：", paper.title);
+    const t = window.prompt("Enter a new paper title:", paper.title);
     if (!t || !t.trim() || t.trim() === paper.title) return;
     if (!isPersonalMode) {
       setPapers(prev => prev.map(p => (p.id === paper.id ? { ...p, title: t.trim() } : p)));
@@ -1129,11 +1128,11 @@ function App() {
       await updateDoc(doc(db, "papers", paper.id), { title: t.trim() });
       if (selectedPaper?.id === paper.id) setSelectedPaper({ ...selectedPaper, title: t.trim() });
       await fetchPapers();
-    } catch (e) { alert("タイトルの変更に失敗しました: " + e.message); }
+    } catch (e) { alert("Failed to rename paper: " + e.message); }
   };
 
   const handleMovePaper = async (paper) => {
-    const dest = window.prompt("移動先のフォルダ名を入力してください：\n（サブフォルダは / で区切ります）", paper.folder || "Uncategorized");
+    const dest = window.prompt("Enter the destination folder path:\n(Use / for sub-folders)", paper.folder || "Uncategorized");
     if (!dest || !dest.trim()) return;
     if (!isPersonalMode) {
       setPapers(prev => prev.map(p => (p.id === paper.id ? { ...p, folder: dest.trim() } : p)));
@@ -1144,11 +1143,11 @@ function App() {
       await updateDoc(doc(db, "papers", paper.id), { folder: dest.trim() });
       setExpandedFolders(prev => ({ ...prev, [dest.trim()]: true }));
       await fetchPapers();
-    } catch (e) { alert("移動に失敗しました: " + e.message); }
+    } catch (e) { alert("Failed to move paper: " + e.message); }
   };
 
   const handleDeletePaper = async (paper) => {
-    if (!window.confirm(`論文「${paper.title}」を完全に削除しますか？`)) return;
+    if (!window.confirm(`Permanently delete "${paper.title}"?`)) return;
     const modeKey = isPersonalMode ? "personal" : "demo";
     if (!isPersonalMode) {
       setPapers(prev => prev.filter(p => p.id !== paper.id));
@@ -1161,12 +1160,12 @@ function App() {
       if (selectedPaper?.id === paper.id) { setSelectedPaper(null); saveStorage(`pm_lastPaperId_${modeKey}`, null); }
       setChatHistoryMap(prev => { const n = { ...prev }; delete n[paper.id]; return n; });
       await fetchPapers();
-    } catch (e) { alert("削除に失敗しました: " + e.message); }
+    } catch (e) { alert("Failed to delete paper: " + e.message); }
   };
 
   const runInitialSummary = async (paper) => {
     if (!paper.abstract || !paper.abstract.trim()) {
-      await updateChatForPaper(paper.id, [{ role: 'ai', text: "（要約用テキストが未登録です。下のメモ欄に自由にノートを記入できます）" }]);
+      await updateChatForPaper(paper.id, [{ role: 'ai', text: "(No abstract registered yet. You can take notes freely in the Memo section below.)" }]);
       return;
     }
     setLoading(true);
@@ -1286,7 +1285,7 @@ ${extractedText}`;
 
   const handleDropPdfFile = async (file, targetFolder = null) => {
     if (!file || (!file.type.includes("pdf") && !file.name.toLowerCase().endsWith(".pdf"))) {
-      alert("PDFファイルをドロップしてください。");
+      alert("Please drop a PDF file.");
       return;
     }
     const destFolder = targetFolder && targetFolder !== "ROOT" && targetFolder !== "Uncategorized"
@@ -1306,7 +1305,7 @@ ${extractedText}`;
     }
   };
 
-const handleAddPaper = async () => {
+  const handleAddPaper = async () => {
     if (!newTitle.trim()) return;
     const folderName = newFolder.trim() || "Uncategorized";
     if (!isPersonalMode) {
@@ -1550,7 +1549,7 @@ const handleAddPaper = async () => {
             {currentPdfUrl && (
               <>
                 <button onClick={() => setIsReadingMode(false)} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: !isReadingMode ? 'bold' : 'normal', backgroundColor: !isReadingMode ? '#007bff' : '#fff', color: !isReadingMode ? '#fff' : '#333' }}>📄 PDF</button>
-                <button onClick={handleToggleReadingMode} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: isReadingMode ? 'bold' : 'normal', backgroundColor: isReadingMode ? '#007bff' : '#fff', color: isReadingMode ? '#fff' : '#333' }}>📖 リーディング</button>
+                <button onClick={handleToggleReadingMode} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer', fontWeight: isReadingMode ? 'bold' : 'normal', backgroundColor: isReadingMode ? '#007bff' : '#fff', color: isReadingMode ? '#fff' : '#333' }}>📖 Reading</button>
               </>
             )}
           </div>
@@ -1560,18 +1559,18 @@ const handleAddPaper = async () => {
               <>
                 <span style={{ fontSize: '11px', color: '#666', marginRight: '2px' }}>🖍️</span>
                 {HIGHLIGHT_COLORS.map(c => (
-                  <button key={c.code} onMouseDown={(e) => e.preventDefault()} onClick={() => handleAddHighlight(c.code)} style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px solid #999', backgroundColor: c.code, cursor: 'pointer', padding: 0 }} title={`選択したテキストに${c.name}色のマーカーを引く`} />
+                  <button key={c.code} onMouseDown={(e) => e.preventDefault()} onClick={() => handleAddHighlight(c.code)} style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px solid #999', backgroundColor: c.code, cursor: 'pointer', padding: 0 }} title={`Highlight selected text (${c.name})`} />
                 ))}
                 <span style={{ width: '1px', height: '18px', backgroundColor: '#ddd', margin: '0 2px' }} />
-                <button onClick={() => setReadingFontSize(s => Math.max(12, s - 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="文字を小さく">A-</button>
-                <button onClick={() => setReadingFontSize(s => Math.min(26, s + 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="文字を大きく">A+</button>
-                <button onClick={() => setReadingTheme(t => (t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light'))} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer' }} title="テーマ切替">{readingTheme === 'light' ? '☀️' : readingTheme === 'sepia' ? '📜' : '🌙'}</button>
+                <button onClick={() => setReadingFontSize(s => Math.max(12, s - 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="Decrease font size">A-</button>
+                <button onClick={() => setReadingFontSize(s => Math.min(26, s + 2))} style={{ height: '26px', minWidth: '30px', padding: '0 6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', cursor: 'pointer' }} title="Increase font size">A+</button>
+                <button onClick={() => setReadingTheme(t => (t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light'))} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer' }} title="Switch theme">{readingTheme === 'light' ? '☀️' : readingTheme === 'sepia' ? '📜' : '🌙'}</button>
                 <span style={{ width: '1px', height: '18px', backgroundColor: '#ddd', margin: '0 2px' }} />
-                <button onMouseDown={(e) => e.preventDefault()} onClick={handleTranslateSelection} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="選択したテキストを翻訳">🌐</button>
-                <button onMouseDown={(e) => e.preventDefault()} onClick={handleToggleSpeech} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: isSpeaking ? '1px solid #d9534f' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isSpeaking ? '#fdecea' : '#fff', color: '#333', cursor: 'pointer' }} title={isSpeaking ? "読み上げを停止" : "読み上げ（選択範囲／未選択なら全文）"}>{isSpeaking ? "⏹️" : "🔊"}</button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={handleTranslateSelection} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="Translate selected text">🌐</button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={handleToggleSpeech} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: isSpeaking ? '1px solid #d9534f' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isSpeaking ? '#fdecea' : '#fff', color: '#333', cursor: 'pointer' }} title={isSpeaking ? "Stop reading aloud" : "Read aloud (selection or full text)"}>{isSpeaking ? "⏹️" : "🔊"}</button>
               </>
             )}
-            <button onClick={handleOpenReadingNewTab} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #007bff', backgroundColor: '#fff', color: '#007bff', fontWeight: 'bold', cursor: 'pointer' }}>↗ 別タブで読む</button>
+            <button onClick={handleOpenReadingNewTab} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #007bff', backgroundColor: '#fff', color: '#007bff', fontWeight: 'bold', cursor: 'pointer' }}>↗ New Tab</button>
           </div>
         </div>
       )}
@@ -1584,7 +1583,7 @@ const handleAddPaper = async () => {
             ) : (
               <div style={{ maxWidth: '720px', margin: '0 auto' }}>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '11px', color: themeStyles.sub, marginBottom: '12px' }}>
-                  💡 文字を選択して上の 🖍️ マーカー・🌐 翻訳・🔊 読み上げが使えます（マーカーはタップで削除）
+                  💡 Select text to use 🖍️ Highlight, 🌐 Translate, or 🔊 Read aloud (click a highlight to remove)
                 </div>
                 <h2 style={{ fontSize: '1.35em', lineHeight: '1.4', marginTop: 0, paddingBottom: '12px', color: themeStyles.text, borderBottom: `1px solid ${themeStyles.border}` }}>{selectedPaper?.title}</h2>
                 {readingPages?.map((p) => (
@@ -1596,7 +1595,7 @@ const handleAddPaper = async () => {
                         <p key={idx} data-page={p.pageNum} data-para={idx} style={{ margin: '0 0 1em 0', wordBreak: 'break-word' }}>
                           {splitTextByHighlights(para, paraHls).map((seg, sIdx) =>
                             seg.highlight ? (
-                              <mark key={sIdx} onClick={() => handleRemoveHighlight(seg.highlight.id)} title="タップしてマーカーを削除" style={{ backgroundColor: seg.highlight.color, color: '#1f2328', padding: '0 2px', borderRadius: '3px', cursor: 'pointer' }}>{seg.text}</mark>
+                              <mark key={sIdx} onClick={() => handleRemoveHighlight(seg.highlight.id)} title="Click to remove highlight" style={{ backgroundColor: seg.highlight.color, color: '#1f2328', padding: '0 2px', borderRadius: '3px', cursor: 'pointer' }}>{seg.text}</mark>
                             ) : (<span key={sIdx}>{seg.text}</span>)
                           )}
                         </p>
@@ -1619,7 +1618,10 @@ const handleAddPaper = async () => {
           <div style={{ padding: '24px', border: '2px dashed #ccc', borderRadius: '8px', backgroundColor: '#fff', maxWidth: '480px', width: '100%', boxSizing: 'border-box' }}>
             <h3 style={{ margin: '0 0 10px 0', color: '#555' }}>📄 PDF Viewer</h3>
             <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>Select a local PDF file to view it side-by-side with AI & Notes.</p>
-            <input type="file" accept="application/pdf" onChange={handleViewerPdfLoad} style={{ color: '#333', maxWidth: '100%' }} />
+            <label style={{ display: 'inline-block', padding: '7px 14px', backgroundColor: '#007bff', color: '#fff', borderRadius: '5px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+              📂 Select PDF File
+              <input type="file" accept="application/pdf" onChange={handleViewerPdfLoad} style={{ display: 'none' }} />
+            </label>
             {!isPersonalMode && selectedPaper?.abstract && (
               <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'left', fontSize: '12px', color: '#444', whiteSpace: 'pre-wrap' }}>
                 <strong>[Sample Paper Abstract]</strong><br />{selectedPaper.abstract}
@@ -1632,12 +1634,12 @@ const handleAddPaper = async () => {
       {isReadingMode && translationBox && (
         <div style={{ flexShrink: 0, maxHeight: '35%', overflowY: 'auto', borderTop: '2px solid #007bff', backgroundColor: '#f8fbff', padding: '10px 14px', textAlign: 'left', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#007bff' }}>🌐 翻訳 ({aiLanguage})</span>
+            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#007bff' }}>🌐 Translation ({aiLanguage})</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {!translationBox.loading && (
-                <button onClick={handleAskAiAboutTranslation} style={{ padding: '2px 6px', fontSize: '14px', borderRadius: '4px', border: '1px solid #007bff', backgroundColor: '#fff', cursor: 'pointer', lineHeight: 1 }} title="この原文と訳をAIチャットに送って質問する">🤖</button>
+                <button onClick={handleAskAiAboutTranslation} style={{ padding: '2px 6px', fontSize: '14px', borderRadius: '4px', border: '1px solid #007bff', backgroundColor: '#fff', cursor: 'pointer', lineHeight: 1 }} title="Send this excerpt and translation to AI chat">🤖</button>
               )}
-              <button onClick={() => setTranslationBox(null)} style={{ background: 'none', border: 'none', fontSize: '15px', cursor: 'pointer', color: '#666', padding: '0 4px' }} title="閉じる">✕</button>
+              <button onClick={() => setTranslationBox(null)} style={{ background: 'none', border: 'none', fontSize: '15px', cursor: 'pointer', color: '#666', padding: '0 4px' }} title="Close">✕</button>
             </div>
           </div>
           <div style={{ fontSize: '13.5px', lineHeight: '1.6', color: '#1f2328', whiteSpace: 'pre-wrap' }}>
@@ -1681,36 +1683,36 @@ const handleAddPaper = async () => {
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
         <span style={{ fontSize: '13px', marginRight: '1px' }}>📝</span>
         {MEMO_COLORS.map(c => (
-          <button key={c.key} onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyMemoColor(c.code)} title={`文字色：${c.label}`} style={{ width: '15px', height: '15px', borderRadius: '50%', backgroundColor: c.code, border: activeMemoColor === c.code ? '2px solid #007bff' : '1px solid #bbb', boxShadow: activeMemoColor === c.code ? '0 0 0 1px #fff inset' : 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }} />
+          <button key={c.key} onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyMemoColor(c.code)} title={`Text color: ${c.label}`} style={{ width: '15px', height: '15px', borderRadius: '50%', backgroundColor: c.code, border: activeMemoColor === c.code ? '2px solid #007bff' : '1px solid #bbb', boxShadow: activeMemoColor === c.code ? '0 0 0 1px #fff inset' : 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }} />
         ))}
         <span style={{ width: '1px', height: '13px', backgroundColor: '#ddd', margin: '0 2px' }} />
-        <button type="button" role="switch" aria-checked={isMemoPreview} onClick={() => { setIsMdMenuOpen(false); setIsMemoPreview(p => !p); }} title={isMemoPreview ? "表示モード（クリックで編集に戻る）" : "編集モード（クリックで数式・Markdownを表示）"} style={{ position: 'relative', width: '36px', height: '20px', borderRadius: '999px', border: 'none', backgroundColor: isMemoPreview ? '#34c759' : '#cbd5e1', cursor: 'pointer', padding: 0, transition: 'background-color 0.2s ease', flexShrink: 0 }}>
+        <button type="button" role="switch" aria-checked={isMemoPreview} onClick={() => { setIsMdMenuOpen(false); setIsMemoPreview(p => !p); }} title={isMemoPreview ? "Preview Mode (click to edit)" : "Edit Mode (click to preview Markdown & Math)"} style={{ position: 'relative', width: '36px', height: '20px', borderRadius: '999px', border: 'none', backgroundColor: isMemoPreview ? '#34c759' : '#cbd5e1', cursor: 'pointer', padding: 0, transition: 'background-color 0.2s ease', flexShrink: 0 }}>
           <span style={{ position: 'absolute', top: '2px', left: '2px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', lineHeight: 1, transform: isMemoPreview ? 'translateX(16px)' : 'translateX(0)', transition: 'transform 0.2s ease' }}>
             {isMemoPreview ? "👁️" : "✏️"}
           </span>
         </button>
         <span style={{ width: '1px', height: '13px', backgroundColor: '#ddd', margin: '0 2px' }} />
-        <button onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("$")} title="文章と同じ行に変数・数式を挿入（$...$）" style={{ height: '21px', padding: '0 5px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'baseline', gap: '2px', lineHeight: 1 }}>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("$")} title="Insert inline math ($...$)" style={{ height: '21px', padding: '0 5px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'baseline', gap: '2px', lineHeight: 1 }}>
           <span style={{ fontSize: '9.5px', color: '#888' }}>Aa</span>
           <span style={{ fontSize: '11.5px', color: '#1a73e8', fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 'bold' }}>x<sub style={{ fontSize: '7.5px', fontStyle: 'normal' }}>i</sub></span>
         </button>
-        <button onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("$$")} title="独立した行に大きな数式を挿入（$$...$$）" style={{ height: '21px', padding: '0 5px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px', lineHeight: 1 }}>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("$$")} title="Insert block math ($$...$$)" style={{ height: '21px', padding: '0 5px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px', lineHeight: 1 }}>
           <span style={{ fontSize: '9.5px', color: '#999' }}>[</span><span style={{ fontSize: '11.5px', color: '#1f2328', fontFamily: 'Georgia, serif', fontWeight: 'bold' }}>∑</span><span style={{ fontSize: '9.5px', color: '#999' }}>]</span>
         </button>
         <div style={{ display: 'inline-flex', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => setIsMdMenuOpen(prev => !prev)} title="太字・見出し・箇条書きなどの書式メニュー" style={{ height: '21px', padding: '0 5px', border: isMdMenuOpen ? '1px solid #007bff' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isMdMenuOpen ? '#e8f0fe' : '#fff', color: isMdMenuOpen ? '#1a73e8' : '#333', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '1px', lineHeight: 1 }}>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => setIsMdMenuOpen(prev => !prev)} title="Formatting menu" style={{ height: '21px', padding: '0 5px', border: isMdMenuOpen ? '1px solid #007bff' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isMdMenuOpen ? '#e8f0fe' : '#fff', color: isMdMenuOpen ? '#1a73e8' : '#333', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '1px', lineHeight: 1 }}>
             <span>Aa</span><span style={{ fontSize: '8px' }}>▾</span>
           </button>
           {isMdMenuOpen && (
             <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '4px', zIndex: 200, width: '210px', maxWidth: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.16)', overflow: 'hidden' }}>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("bold")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+B"><span><strong>B</strong> 太字</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("italic")} style={mdMenuItemStyle} title="Ctrl+I"><span><em>I</em> 斜体</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("underline")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+U"><span><u>U</u> 下線</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("strikeThrough")} style={mdMenuItemStyle} title="Alt+Shift+5"><span><del>S</del> 取消</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("## ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="## 見出し"><span><strong>H</strong> 見出し</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("- ")} style={mdMenuItemStyle} title="Ctrl+Shift+8"><span>・ 箇条書</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("> ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0', borderBottom: 'none' }} title="> 引用"><span>❝ 引用</span></button>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("`")} style={{ ...mdMenuItemStyle, borderBottom: 'none' }} title="`コード`"><span><code>{"</>"}</code> コード</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("bold")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+B"><span><strong>B</strong> Bold</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("italic")} style={mdMenuItemStyle} title="Ctrl+I"><span><em>I</em> Italic</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("underline")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="Ctrl+U"><span><u>U</u> Underline</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleApplyRichCommand("strikeThrough")} style={mdMenuItemStyle} title="Alt+Shift+5"><span><del>S</del> Strike</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("## ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0' }} title="## Heading"><span><strong>H</strong> Heading</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("- ")} style={mdMenuItemStyle} title="Ctrl+Shift+8"><span>・ Bullet</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertPrefix("> ")} style={{ ...mdMenuItemStyle, borderRight: '1px solid #f0f0f0', borderBottom: 'none' }} title="> Quote"><span>❝ Quote</span></button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertDelim("`")} style={{ ...mdMenuItemStyle, borderBottom: 'none' }} title="`Code`"><span><code>{"</>"}</code> Code</span></button>
             </div>
           )}
         </div>
@@ -1719,7 +1721,7 @@ const handleAddPaper = async () => {
       </div>
 
       {isMemoPreview ? (
-        <div onClick={() => setIsMemoPreview(false)} title="クリックして編集に戻る" style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 10px', fontSize: isMobile ? '14.5px' : '13px', lineHeight: '1.4', letterSpacing: '0', textAlign: 'left', border: '1px solid #007bff', borderRadius: '6px', backgroundColor: '#fff', color: '#1f2328', wordBreak: 'break-word', boxSizing: 'border-box', marginBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px', cursor: 'text' }} dangerouslySetInnerHTML={{ __html: memoText ? renderMarkdownAndMathHtml(memoText, { preserveColors: true }) : '<span style="color:#999;font-size:12px;">（メモはまだありません）</span>' }} />
+        <div onClick={() => setIsMemoPreview(false)} title="Click to edit" style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 10px', fontSize: isMobile ? '14.5px' : '13px', lineHeight: '1.4', letterSpacing: '0', textAlign: 'left', border: '1px solid #007bff', borderRadius: '6px', backgroundColor: '#fff', color: '#1f2328', wordBreak: 'break-word', boxSizing: 'border-box', marginBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0px', cursor: 'text' }} dangerouslySetInnerHTML={{ __html: memoText ? renderMarkdownAndMathHtml(memoText, { preserveColors: true }) : '<span style="color:#999;font-size:12px;">(No notes yet)</span>' }} />
       ) : (
         <div
           ref={memoEditorRef}
@@ -1760,7 +1762,7 @@ const handleAddPaper = async () => {
 
       {isMobile && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #ddd', flexShrink: 0, gap: '8px' }}>
-          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 10px', fontSize: '15px', cursor: 'pointer', color: '#333', flexShrink: 0 }}>☰ 論文一覧</button>
+          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 10px', fontSize: '15px', cursor: 'pointer', color: '#333', flexShrink: 0 }}>☰ Papers</button>
           <div style={{ flex: 1, fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', color: '#333' }}>{selectedPaper ? selectedPaper.title : "📚 Paper Manager"}</div>
           <span onClick={handleToggleMode} style={{ fontSize: '10px', padding: '3px 7px', borderRadius: '10px', backgroundColor: isPersonalMode ? '#e6f4ea' : '#e8f0fe', color: isPersonalMode ? '#137333' : '#1a73e8', fontWeight: 'bold', flexShrink: 0 }}>{isPersonalMode ? "🔓" : "Demo"}</span>
         </div>
@@ -1858,7 +1860,7 @@ const handleAddPaper = async () => {
           )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', gap: '10px', padding: '20px', textAlign: 'center' }}>
-            <h3>{isMobile ? "👆 左上の「☰ 論文一覧」から論文を選択してください" : "👈 Please select a paper from the left menu (or drop a PDF here)"}</h3>
+            <h3>{isMobile ? '👆 Tap "☰ Papers" at the top left to select a paper' : "👈 Please select a paper from the left menu (or drop a PDF here)"}</h3>
             {!isPersonalMode && <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Currently in Demo Mode — Select a sample paper to test AI summary, PDF viewer, and Notes.</p>}
           </div>
         )}
