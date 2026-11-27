@@ -295,7 +295,9 @@ const extractReadingPagesFromPdf = async (pdfUrl, onProgress) => {
   return pages;
 };
 
-const buildReadingModeHtml = (title, pages, initialTheme = "light", initialFontSize = 17, highlights = []) => {
+const SPEECH_RATES = [0.75, 1.0, 1.25, 1.5];
+
+const buildReadingModeHtml = (title, pages, initialTheme = "light", initialFontSize = 17, highlights = [], initialRate = 1.0) => {
   const safeTitle = escapeHtml(title || "Reading Mode");
   const bodyHtml = pages.map((p) => {
     const parasHtml = p.paragraphs.map((para, idx) => {
@@ -308,6 +310,8 @@ const buildReadingModeHtml = (title, pages, initialTheme = "light", initialFontS
     return `<section class="page-block"><div class="page-label">Page ${p.pageNum}</div>${parasHtml}</section>`;
   }).join("\n");
 
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" /><title>📖 ${safeTitle}</title><style>:root{--bg:#fff;--text:#1f2328;--sub:#656d76;--bar:rgba(248,249,250,.94);--bd:#e1e4e8;--btn:#fff}body[data-theme="sepia"]{--bg:#f6efe2;--text:#3b2f23;--sub:#7a6855;--bar:rgba(239,229,211,.95);--bd:#dfd1b8;--btn:#fbf6ec}body[data-theme="dark"]{--bg:#16181c;--text:#e6e8eb;--sub:#9aa0a6;--bar:rgba(28,31,38,.95);--bd:#2f343d;--btn:#242830}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;transition:background .2s,color .2s;text-align:left}.toolbar{position:sticky;top:0;z-index:100;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--bar);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.toolbar-title{font-size:13px;font-weight:700;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}button{background:var(--btn);color:var(--text);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}main{max-width:740px;margin:0 auto;padding:28px 20px 80px;font-size:${initialFontSize}px;line-height:1.85}h1{font-size:1.55em;line-height:1.35;margin:0 0 28px;padding-bottom:16px;border-bottom:1px solid var(--bd)}.page-block{margin-bottom:32px}.page-label{font-family:sans-serif;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 12px;padding-bottom:4px;border-bottom:1px dashed var(--bd)}p{margin:0 0 1.05em;word-break:break-word}</style></head><body data-theme="${initialTheme}"><header class="toolbar"><div class="toolbar-title">📖 ${safeTitle}</div><div class="controls"><button onclick="changeSize(-2)">A-</button><button onclick="changeSize(2)">A+</button><button onclick="setTheme('light')">☀️</button><button onclick="setTheme('sepia')">📜</button><button onclick="setTheme('dark')">🌙</button><button id="ttsBtn" onclick="toggleSpeech()" title="Read aloud (selection or full text)">🔊</button><button id="rateBtn" onclick="cycleRate()" title="Speech speed">${initialRate}x</button></div></header><main id="article"><h1>${safeTitle}</h1>${bodyHtml}</main><script>let s=${initialFontSize};const rates=[1,1.25,1.5,2];let r=${initialRate};let speaking=false;function changeSize(d){s=Math.min(28,Math.max(13,s+d));document.getElementById('article').style.fontSize=s+'px'}function setTheme(t){document.body.setAttribute('data-theme',t)}function cycleRate(){const i=rates.indexOf(r);r=rates[(i+1)%rates.length];document.getElementById('rateBtn').textContent=r+'x';if(speaking){speechSynthesis.cancel();speaking=false;document.getElementById('ttsBtn').textContent='🔊';}}function toggleSpeech(){if(!('speechSynthesis' in window)){alert('Text-to-speech is not supported.');return;}const btn=document.getElementById('ttsBtn');if(speaking){speechSynthesis.cancel();speaking=false;btn.textContent='🔊';return;}const sel=window.getSelection();const selText=sel&&!sel.isCollapsed?sel.toString().trim():'';const chunks=selText?[selText]:Array.from(document.querySelectorAll('#article p')).map(p=>p.innerText.trim()).filter(Boolean);if(!chunks.length)return;speechSynthesis.cancel();speaking=true;btn.textContent='⏹️';chunks.forEach((c,idx)=>{const u=new SpeechSynthesisUtterance(c);u.lang=/[\\u3040-\\u30ff\\u4e00-\\u9faf]/.test(c)?'ja-JP':'en-US';u.rate=r;if(idx===chunks.length-1)u.onend=()=>{speaking=false;btn.textContent='🔊';};u.onerror=()=>{speaking=false;btn.textContent='🔊';};speechSynthesis.speak(u);});}window.onbeforeunload=()=>speechSynthesis.cancel();</script></body></html>`;
+};
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" /><title>📖 ${safeTitle}</title><style>:root{--bg:#fff;--text:#1f2328;--sub:#656d76;--bar:rgba(248,249,250,.94);--bd:#e1e4e8;--btn:#fff}body[data-theme="sepia"]{--bg:#f6efe2;--text:#3b2f23;--sub:#7a6855;--bar:rgba(239,229,211,.95);--bd:#dfd1b8;--btn:#fbf6ec}body[data-theme="dark"]{--bg:#16181c;--text:#e6e8eb;--sub:#9aa0a6;--bar:rgba(28,31,38,.95);--bd:#2f343d;--btn:#242830}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,"Hiragino Mincho ProN","Yu Mincho",serif;transition:background .2s,color .2s;text-align:left}.toolbar{position:sticky;top:0;z-index:100;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--bar);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.toolbar-title{font-size:13px;font-weight:700;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}button{background:var(--btn);color:var(--text);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}main{max-width:740px;margin:0 auto;padding:28px 20px 80px;font-size:${initialFontSize}px;line-height:1.85}h1{font-size:1.55em;line-height:1.35;margin:0 0 28px;padding-bottom:16px;border-bottom:1px solid var(--bd)}.page-block{margin-bottom:32px}.page-label{font-family:sans-serif;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 12px;padding-bottom:4px;border-bottom:1px dashed var(--bd)}p{margin:0 0 1.05em;word-break:break-word}</style></head><body data-theme="${initialTheme}"><header class="toolbar"><div class="toolbar-title">📖 ${safeTitle}</div><div class="controls"><button onclick="changeSize(-2)">A-</button><button onclick="changeSize(2)">A+</button><button onclick="setTheme('light')">☀️</button><button onclick="setTheme('sepia')">📜</button><button onclick="setTheme('dark')">🌙</button></div></header><main id="article"><h1>${safeTitle}</h1>${bodyHtml}</main><script>let s=${initialFontSize};function changeSize(d){s=Math.min(28,Math.max(13,s+d));document.getElementById('article').style.fontSize=s+'px'}function setTheme(t){document.body.setAttribute('data-theme',t)}</script></body></html>`;
 };
 
@@ -479,6 +483,7 @@ function App() {
   const lastSelectionRef = useRef(null);
   const [translationBox, setTranslationBox] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechRate, setSpeechRate] = useState(() => loadStorage("pm_speechRate", 1.0));
 
   const [sidebarWidth, setSidebarWidth] = useState(() => loadStorage("pm_sidebarWidth", 280));
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
@@ -585,7 +590,7 @@ function App() {
   useEffect(() => saveStorage("pm_mobileTab", mobileTab), [mobileTab]);
   useEffect(() => saveStorage("pm_chats", chatHistoryMap), [chatHistoryMap]);
   useEffect(() => saveStorage("pm_readingTheme", readingTheme), [readingTheme]);
-  useEffect(() => saveStorage("pm_readingFontSize", readingFontSize), [readingFontSize]);
+  useEffect(() => saveStorage("pm_speechRate", speechRate), [speechRate]);
 
   const handleMemoKeyDown = (e) => {
     if (e.nativeEvent?.isComposing) return;
@@ -779,11 +784,21 @@ function App() {
     chunks.forEach((chunk, idx) => {
       const utter = new SpeechSynthesisUtterance(chunk);
       utter.lang = /[ぁ-んァ-ヶ一-龠]/.test(chunk) ? "ja-JP" : "en-US";
-      utter.rate = 1.0;
+      utter.rate = speechRate;
       if (idx === chunks.length - 1) utter.onend = () => setIsSpeaking(false);
       utter.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utter);
     });
+  };
+
+const handleCycleSpeechRate = () => {
+    const idx = SPEECH_RATES.indexOf(speechRate);
+    const nextRate = SPEECH_RATES[(idx + 1) % SPEECH_RATES.length];
+    setSpeechRate(nextRate);
+    if (isSpeaking) {
+      window.speechSynthesis?.cancel();
+      setIsSpeaking(false);
+    }
   };
 
   const handleToggleReadingMode = async () => {
@@ -822,7 +837,7 @@ function App() {
       }
       if (!pagesToShow || pagesToShow.length === 0) { newWin.close(); alert("No PDF or text available to display."); return; }
       newWin.document.open();
-      newWin.document.write(buildReadingModeHtml(title, pagesToShow, readingTheme, readingFontSize, highlights));
+      newWin.document.write(buildReadingModeHtml(title, pagesToShow, readingTheme, readingFontSize, highlights, speechRate));
       newWin.document.close();
     } catch (err) { newWin.close(); alert("Failed to open Reading Mode in a new tab: " + err.message); }
   };
@@ -1568,6 +1583,12 @@ ${extractedText}`;
                 <span style={{ width: '1px', height: '18px', backgroundColor: '#ddd', margin: '0 2px' }} />
                 <button onMouseDown={(e) => e.preventDefault()} onClick={handleTranslateSelection} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="Translate selected text">🌐</button>
                 <button onMouseDown={(e) => e.preventDefault()} onClick={handleToggleSpeech} style={{ height: '26px', padding: '0 7px', fontSize: '12px', border: isSpeaking ? '1px solid #d9534f' : '1px solid #ccc', borderRadius: '4px', backgroundColor: isSpeaking ? '#fdecea' : '#fff', color: '#333', cursor: 'pointer' }} title={isSpeaking ? "Stop reading aloud" : "Read aloud (selection or full text)"}>{isSpeaking ? "⏹️" : "🔊"}</button>
+<button onMouseDown={(e) => e.preventDefault()} onClick={handleCycleSpeechRate} style={{ height: '26px', padding: '0 6px', fontSize: '11.5px', fontWeight: 'bold', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="Speech speed">
+                  {speechRate}x
+                </button>
+<button onMouseDown={(e) => e.preventDefault()} onClick={handleCycleSpeechRate} style={{ height: '26px', padding: '0 6px', fontSize: '11.5px', fontWeight: 'bold', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', color: '#333', cursor: 'pointer' }} title="Speech speed">
+                  {speechRate}x
+                </button>
               </>
             )}
             <button onClick={handleOpenReadingNewTab} style={{ padding: '4px 9px', fontSize: '12px', borderRadius: '5px', border: '1px solid #007bff', backgroundColor: '#fff', color: '#007bff', fontWeight: 'bold', cursor: 'pointer' }}>↗ New Tab</button>
